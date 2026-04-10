@@ -19,18 +19,18 @@ Each component is analyzed, forecasted, and dynamically combined to generate a *
 
 ## 🚀 Key Features
 
-* ✅ Real-world dataset preprocessing (handles noisy/messy data)
-* ✅ Feature engineering based on wildfire science (FWI system)
-* ✅ Granger causality analysis (understanding relationships between components)
-* ✅ Time series forecasting using:
+* Real-world dataset preprocessing (handles noisy/messy data)
+* Feature engineering based on wildfire science (FWI system)
+* Granger causality analysis (understanding relationships between components)
+* Time series forecasting using:
 
   * ARIMA
   * Exponential Smoothing
   * Gradient Boosting
-* ✅ Dynamic weighting based on environmental conditions
-* ✅ Composite wildfire risk score
-* ✅ Alert system (GREEN → CRITICAL)
-* ✅ Visualizations for interpretability
+* Dynamic weighting based on environmental conditions
+* Composite wildfire risk score
+* Alert system (GREEN → CRITICAL)
+* Visualizations for interpretability
 
 ---
 
