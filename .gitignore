@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual env
+venv/
+wildfire_env/
+
+# Mac
+.DS_Store
+
+# Data (optional)
+*.csv
