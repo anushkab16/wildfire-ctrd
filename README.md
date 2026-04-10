@@ -168,6 +168,8 @@ By combining **causal analysis + forecasting + dynamic weighting**, the system p
 ## 👩‍💻 Author
 
 **Anushka Batte**
+
 BTech Computer Engineering
+
 Interested in AI, ML, Healthcare & Real-World Impact Systems
 
