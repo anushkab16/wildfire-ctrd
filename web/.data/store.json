@@ -1,5 +1,189 @@
 {
   "watchlists": [],
-  "riskRuns": [],
-  "alerts": []
+  "riskRuns": [
+    {
+      "requestId": "64bfcf91-e757-4c7f-8a42-3a74ca2d6dfa",
+      "region": {
+        "latitude": 36.75,
+        "longitude": 3.06,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 9,
+      "id": "bb40da3b-5047-4d21-9df4-b27933ee7fb1",
+      "createdAt": "2026-04-13T15:46:38.906Z"
+    },
+    {
+      "requestId": "66723df0-b80f-4fa3-8025-99e23fd7abbc",
+      "region": {
+        "latitude": 36.75,
+        "longitude": 3.06,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 4,
+      "id": "a7b570bb-a029-4748-8880-3cd8b408b693",
+      "createdAt": "2026-04-13T15:46:11.056Z"
+    },
+    {
+      "requestId": "a2b3fe6e-e9f8-4b35-a137-cb7dc85a5285",
+      "region": {
+        "latitude": 36.75,
+        "longitude": 3.06,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 4,
+      "id": "f868d42c-a33c-44a8-9bed-3c43af277f4a",
+      "createdAt": "2026-04-13T15:46:10.176Z"
+    },
+    {
+      "requestId": "d50a43e5-c42d-4c81-bd67-4d48ef56ce15",
+      "region": {
+        "latitude": 36.75,
+        "longitude": 3.06,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 5,
+      "id": "c890771a-6420-4060-af7c-b43b8c19512a",
+      "createdAt": "2026-04-13T15:46:09.284Z"
+    },
+    {
+      "requestId": "d91159b2-aaf3-4525-b048-157f6f2025f7",
+      "region": {
+        "latitude": 36.75,
+        "longitude": 3.06,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 7,
+      "id": "5a1e9e6f-b819-4f13-82fc-a9ec40bb2d92",
+      "createdAt": "2026-04-13T15:45:57.776Z"
+    },
+    {
+      "requestId": "f1bce2a7-6b1c-4d7d-bd9a-376a9f1777cf",
+      "region": {
+        "latitude": 36.75,
+        "longitude": 3.06,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 4,
+      "id": "ff55203f-010c-423f-abbb-1147c7591008",
+      "createdAt": "2026-04-13T15:43:01.832Z"
+    },
+    {
+      "requestId": "f2b10cf0-23ed-4c4f-9c0a-7ca2b21c754b",
+      "region": {
+        "latitude": 36.75,
+        "longitude": 3.06,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 6,
+      "id": "3db90f89-9697-48d8-81dc-879639866d27",
+      "createdAt": "2026-04-13T15:25:19.007Z"
+    }
+  ],
+  "alerts": [
+    {
+      "runId": "bb40da3b-5047-4d21-9df4-b27933ee7fb1",
+      "requestId": "64bfcf91-e757-4c7f-8a42-3a74ca2d6dfa",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "6c112be6-0949-4abc-b905-1d932ceed5e9",
+      "createdAt": "2026-04-13T15:46:38.912Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "a7b570bb-a029-4748-8880-3cd8b408b693",
+      "requestId": "66723df0-b80f-4fa3-8025-99e23fd7abbc",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "a249f7a4-1a55-4de2-bc41-6df9a9b0adbd",
+      "createdAt": "2026-04-13T15:46:11.059Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "f868d42c-a33c-44a8-9bed-3c43af277f4a",
+      "requestId": "a2b3fe6e-e9f8-4b35-a137-cb7dc85a5285",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "15f08e20-b10e-4d4d-95d5-71cf13d1c7a9",
+      "createdAt": "2026-04-13T15:46:10.180Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "c890771a-6420-4060-af7c-b43b8c19512a",
+      "requestId": "d50a43e5-c42d-4c81-bd67-4d48ef56ce15",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "50339d86-773e-46fe-bda1-ee2de269ca9b",
+      "createdAt": "2026-04-13T15:46:09.290Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "5a1e9e6f-b819-4f13-82fc-a9ec40bb2d92",
+      "requestId": "d91159b2-aaf3-4525-b048-157f6f2025f7",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "15d8b350-e33a-47a3-81c2-6e1b36660d8f",
+      "createdAt": "2026-04-13T15:45:57.784Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "ff55203f-010c-423f-abbb-1147c7591008",
+      "requestId": "f1bce2a7-6b1c-4d7d-bd9a-376a9f1777cf",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "acknowledged",
+      "id": "60a67026-60f9-452e-b79d-31468d02af90",
+      "createdAt": "2026-04-13T15:43:01.834Z",
+      "acknowledgedAt": "2026-04-13T15:44:19.706Z"
+    },
+    {
+      "runId": "3db90f89-9697-48d8-81dc-879639866d27",
+      "requestId": "f2b10cf0-23ed-4c4f-9c0a-7ca2b21c754b",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "acknowledged",
+      "id": "e8bac8e4-ae65-4d14-add9-b52e202c8584",
+      "createdAt": "2026-04-13T15:25:19.011Z",
+      "acknowledgedAt": "2026-04-13T15:44:21.120Z"
+    }
+  ]
 }
