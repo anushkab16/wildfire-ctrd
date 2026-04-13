@@ -90,3 +90,24 @@ a:hover {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+html.light {
+  --bg: #f5f5f0;
+  --surface: #ffffff;
+  --surface-hover: #f0f0ea;
+  --border: #d4d4d0;
+  --border-light: #c0c0bc;
+  --text: #1a1a1a;
+  --text-primary: #1a1a1a;
+  --text-secondary: #555;
+  --text-dim: #777;
+  --text-muted: #999;
+  --accent: #000;
+  --accent-rgb: 0, 0, 0;
+  --red: #dc2626;
+  --green: #16a34a;
+  --yellow: #ca8a04;
+  --orange: #ea580c;
+  --blue: #2563eb;
+  --danger: #dc2626;
+}

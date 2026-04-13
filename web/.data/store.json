@@ -2,6 +2,21 @@
   "watchlists": [],
   "riskRuns": [
     {
+      "requestId": "8b02c202-89cb-4e69-9b66-e422514b41ab",
+      "region": {
+        "latitude": -28.57,
+        "longitude": -63.37,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.21923125771508983,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 9,
+      "id": "f24c5bad-d02b-4aa8-ac23-a34e2e48ddbf",
+      "createdAt": "2026-04-13T16:00:21.113Z"
+    },
+    {
       "requestId": "64bfcf91-e757-4c7f-8a42-3a74ca2d6dfa",
       "region": {
         "latitude": 36.75,
@@ -108,6 +123,17 @@
     }
   ],
   "alerts": [
+    {
+      "runId": "f24c5bad-d02b-4aa8-ac23-a34e2e48ddbf",
+      "requestId": "8b02c202-89cb-4e69-9b66-e422514b41ab",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "fa2c9003-efb2-4e05-bb73-1bfccda69a49",
+      "createdAt": "2026-04-13T16:00:21.118Z",
+      "acknowledgedAt": null
+    },
     {
       "runId": "bb40da3b-5047-4d21-9df4-b27933ee7fb1",
       "requestId": "64bfcf91-e757-4c7f-8a42-3a74ca2d6dfa",

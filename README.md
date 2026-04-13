@@ -113,20 +113,58 @@ Click **"Run Evaluation"** to execute:
 
 A dedicated evaluation page is also available at `/evaluation`.
 
+### Click-on-Map Coordinates
+
+Click anywhere on the 2D world map and the latitude/longitude automatically fills into the Risk Analysis panel. No need to type coordinates manually.
+
+### Risk Timeline Chart
+
+After running analysis, a sparkline SVG chart shows risk score over time, color-coded by severity. Visualizes the temporal behavior of the ML model.
+
+### Settings Modal with Preset Profiles
+
+Click the gear icon in the header to open Settings. Choose a profile:
+
+- **Researcher** — all panels visible, full ML detail
+- **Operations** — map + alerts + fires + feed only
+- **Minimal** — map + risk analysis only
+
+You can also toggle individual panels on/off.
+
+### Compare Regions
+
+Run analysis on 2 or more different regions, then use the Compare Regions panel to select two and view their risk scores, alert levels, dominant drivers, and component breakdowns side by side.
+
+### Report Export
+
+After analysis, click **"Download Report"** in the Risk Analysis panel to export a plain-text report containing the full risk assessment, forecasts, explainability breakdown, timeline, and hotspot data.
+
+### Dark/Light Theme Toggle
+
+Click the sun/moon icon in the header to switch between dark terminal mode and a light theme. Both themes use the same monospace aesthetic.
+
+### Auto-Refresh with SSE
+
+The dashboard automatically refreshes via Server-Sent Events and a 60-second polling interval. KPIs, alerts, and the live feed update without manual action. The header shows "Refreshing..." during updates.
+
 ---
 
 ## How to Use (Step by Step)
 
 1. Open `http://localhost:3000` in your browser
 2. Explore the map — hover colored dots to see region descriptions and live weather
-3. In **Risk Analysis**, click **Sample** to load the built-in dataset
-4. Leave coordinates at Algeria defaults or change them to any region
+3. **Click anywhere on the map** to set analysis coordinates, or type them manually
+4. In **Risk Analysis**, click **Sample** to load the built-in dataset
 5. Click **Run Analysis**
-6. Once complete, all panels populate: risk score, forecasts, explainability, active fires, alerts
+6. Once complete, all panels populate: risk score, timeline chart, forecasts, explainability, active fires, alerts
 7. The map updates with detected hotspots as orange dots
-8. Click **"+ Add current region"** in Watchlists to save it
-9. Click **Run Evaluation** to see model backtest and ablation metrics
-10. Visit `/evaluation` for a dedicated evaluation dashboard
+8. Click **"Download Report"** to export the analysis results
+9. Run analysis on a different region, then use **Compare Regions** to view them side by side
+10. Click **"+ Add current region"** in Watchlists to save it
+11. Click **Run Evaluation** to see model backtest and ablation metrics
+12. Use **Settings** to switch between Researcher/Operations/Minimal profiles
+13. Toggle **dark/light theme** with the sun/moon button
+14. Visit `/evaluation` for a dedicated evaluation dashboard
 
 ---
 

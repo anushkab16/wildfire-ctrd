@@ -21,6 +21,7 @@ export interface MapPoint {
 interface D3MapProps {
   points?: MapPoint[];
   onSelect?: (id: string) => void;
+  onMapClick?: (lat: number, lon: number) => void;
 }
 
 interface WeatherResult {
@@ -107,7 +108,7 @@ function calculateTerminator(): [number, number][] {
   return pts;
 }
 
-export function D3Map({ points = [], onSelect }: D3MapProps) {
+export function D3Map({ points = [], onSelect, onMapClick }: D3MapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const initialized = useRef(false);
@@ -225,6 +226,18 @@ export function D3Map({ points = [], onSelect }: D3MapProps) {
       zoomRef.current = zoom;
 
       svg.call(zoom);
+
+      svg.on("click", (event: MouseEvent) => {
+        if (!onMapClick) return;
+        const [mx, my] = d3.pointer(event, svgRef.current);
+        const coords = projection.invert?.([mx, my]);
+        if (coords) {
+          onMapClick(
+            Math.round(coords[1] * 100) / 100,
+            Math.round(coords[0] * 100) / 100
+          );
+        }
+      });
 
       try {
         const response = await fetch(
@@ -359,7 +372,7 @@ export function D3Map({ points = [], onSelect }: D3MapProps) {
     }
 
     initMap();
-  }, [showEnhancedTooltip, moveTooltip, hideTooltip]);
+  }, [showEnhancedTooltip, moveTooltip, hideTooltip, onMapClick]);
 
   useEffect(() => {
     if (
