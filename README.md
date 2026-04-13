@@ -19,18 +19,13 @@ Each component is analyzed, forecasted, and dynamically combined to generate a *
 
 ## 🚀 Key Features
 
-* Real-world dataset preprocessing (handles noisy/messy data)
-* Feature engineering based on wildfire science (FWI system)
-* Granger causality analysis (understanding relationships between components)
-* Time series forecasting using:
-
-  * ARIMA
-  * Exponential Smoothing
-  * Gradient Boosting
-* Dynamic weighting based on environmental conditions
-* Composite wildfire risk score
-* Alert system (GREEN → CRITICAL)
-* Visualizations for interpretability
+* ML-first CT-RD wildfire risk decomposition with 5 interpretable components
+* Multi-horizon forecasting (24h / 72h / 7d) with uncertainty intervals
+* Live ingestion support for NASA FIRMS and Open-Meteo
+* Geospatial feature adapter (GEE proxy with heuristic fallback)
+* Explainability panel (dominant driver, top contributors, change deltas)
+* Alert trigger pipeline with optional email and Telegram notifications
+* Backtesting + ablation evaluation endpoint for model validation
 
 ---
 
@@ -61,11 +56,10 @@ These help in understanding **why** a certain risk level is predicted.
 
 ## 🛠️ Tech Stack
 
-* Python
-* Pandas, NumPy
-* Scikit-learn
-* Statsmodels
-* Matplotlib, Seaborn
+* Next.js + TypeScript
+* shadcn/ui + Tailwind
+* Node route handlers for ingestion + ML inference
+* Leaflet map rendering for hotspot overlays
 
 ---
 
@@ -98,20 +92,14 @@ git clone https://github.com/YOUR_USERNAME/wildfire-ctrd.git
 cd wildfire-ctrd
 ```
 
-### 2. Create virtual environment (recommended)
+### 2. Install web app dependencies
 
-```
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3. Install dependencies
-
-```
-pip install -r requirements.txt
+```bash
+cd web
+npm install
 ```
 
-### 4. Add dataset
+### 3. Add dataset
 
 Place the dataset file in the project folder:
 
@@ -119,17 +107,15 @@ Place the dataset file in the project folder:
 Algerian_forest_fires_dataset.csv
 ```
 
-### 5. Run the project
+### 4. Configure optional live integrations
 
-```
-python main.py --data Algerian_forest_fires_dataset.csv
+```bash
+cp .env.example .env.local
 ```
 
-### 6. Run web app (Next.js + shadcn)
+### 5. Run web app
 
-```
-cd web
-npm install
+```bash
 npm run dev
 ```
 
@@ -160,18 +146,18 @@ By combining **causal analysis + forecasting + dynamic weighting**, the system p
 
 ## ⚠️ Limitations
 
-* Granger causality assumes linear relationships
-* Time series models may be sensitive to data size and quality
-* Does not include real-time satellite or spatial data
+* External APIs may be unavailable or rate-limited
+* Geospatial adapter requires a configured GEE proxy for full live mode
+* Forecasting model is lightweight and intended for academic validation
 
 ---
 
 ## 🚀 Future Improvements
 
-* Add SHAP/feature importance for deeper explainability
-* Integrate satellite or geospatial wildfire data
-* Deploy as a Streamlit web app
-* Use deep learning models (LSTM, Transformers)
+* Add district-level resource allocation optimization
+* Add persistent run history and watchlist monitoring
+* Introduce advanced models (LSTM/Transformers) for comparative benchmarking
+* Add PDF export and reporting automation
 
 ---
 
