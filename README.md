@@ -125,11 +125,15 @@ Algerian_forest_fires_dataset.csv
 python main.py --data Algerian_forest_fires_dataset.csv
 ```
 
-### 6. Run simple UI
+### 6. Run web app (Next.js + shadcn)
 
 ```
-streamlit run app.py
+cd web
+npm install
+npm run dev
 ```
+
+Then open `http://localhost:3000`.
 
 ---
 
