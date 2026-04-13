@@ -7,6 +7,8 @@ import { sendEmailAlert, sendTelegramAlert } from "@/lib/alerts/notifiers";
 import { fetchFirmsHotspots } from "@/lib/ingestion/firms";
 import { fetchGeospatialSummary } from "@/lib/ingestion/gee";
 import { fetchWeatherSummary } from "@/lib/ingestion/weather";
+import { addAlert } from "@/lib/store/alerts";
+import { addRiskRun } from "@/lib/store/risk-runs";
 
 function toBBox(latitude: number, longitude: number, radiusKm: number) {
   const delta = Math.max(0.05, radiusKm / 111);
@@ -99,8 +101,9 @@ export async function POST(request: Request) {
       }
     }
 
+    const alertTriggered = shouldTriggerAlert(result.latestLevel);
     result.alertDispatch = {
-      triggered: shouldTriggerAlert(result.latestLevel),
+      triggered: alertTriggered,
       recipients,
     };
     result.hotspots = hotspotSummary.hotspots.slice(0, 200).map((h) => ({
@@ -108,6 +111,34 @@ export async function POST(request: Request) {
       longitude: h.longitude,
       frp: h.frp,
     }));
+
+    const runRecord = await addRiskRun({
+      requestId,
+      region: {
+        latitude: Number(region.latitude),
+        longitude: Number(region.longitude),
+        radiusKm: Number(region.radiusKm),
+      },
+      latestRisk: result.latestRisk,
+      latestLevel: result.latestLevel,
+      dominantDriver: result.explainability.dominantDriver,
+      hotspotsCount: hotspotSummary.count,
+      latencyMs: result.latencyMs,
+    });
+
+    await addAlert({
+      runId: runRecord.id,
+      requestId,
+      level: result.latestLevel,
+      triggered: alertTriggered,
+      recipients,
+      status: alertTriggered
+        ? recipients.length > 0
+          ? "delivered"
+          : "failed"
+        : "triggered",
+    });
+
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(

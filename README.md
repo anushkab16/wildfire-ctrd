@@ -121,6 +121,16 @@ npm run dev
 
 Then open `http://localhost:3000`.
 
+### 6. v2 API endpoints (used by web app)
+
+- `POST /api/analyze`
+- `GET /api/global-snapshot`
+- `GET /api/timeline`
+- `GET/POST/PATCH /api/watchlists`
+- `GET/PATCH /api/alerts`
+- `GET /api/evaluation`
+- `GET /api/stream` (SSE heartbeat)
+
 ---
 
 ## 📌 Dataset

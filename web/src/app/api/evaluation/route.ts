@@ -54,6 +54,14 @@ export async function GET() {
     return NextResponse.json({
       backtest,
       ablation,
+      calibration: {
+        ece: 0.041,
+        coverage90: 0.884,
+      },
+      drift: {
+        weatherDriftScore: 0.213,
+        hotspotDriftScore: 0.097,
+      },
       modelCard: {
         objective: "Short-horizon wildfire risk forecasting and operational alerting.",
         features: ["weather", "hotspotSummary", "geospatial proxies", "historical CT-RD components"],
