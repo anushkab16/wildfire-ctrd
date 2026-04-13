@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { AblationChart } from "@/components/evaluation/ablation-chart";
 import { BacktestMetrics } from "@/components/evaluation/backtest-metrics";
 import { CalibrationPanel } from "@/components/evaluation/calibration-panel";
@@ -32,17 +31,28 @@ export default function EvaluationPage() {
           drift: payload.drift ?? { weatherDriftScore: 0.2, hotspotDriftScore: 0.1 },
         });
       })
-      .catch(() => {
-        // no-op
-      });
+      .catch(() => {});
   }, []);
 
   if (!data) {
-    return <main className="p-6 text-sm">Loading evaluation...</main>;
+    return (
+      <main style={{ padding: "2rem", fontSize: "0.7rem", color: "var(--text-muted)" }}>
+        Loading evaluation...
+      </main>
+    );
   }
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-4 p-6 md:grid-cols-2">
+    <main
+      style={{
+        maxWidth: 1200,
+        margin: "0 auto",
+        padding: "1rem",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+        gap: "0.5rem",
+      }}
+    >
       <BacktestMetrics metrics={data.backtest} />
       <AblationChart ablation={data.ablation} />
       <CalibrationPanel thresholds={data.calibration} />
@@ -50,4 +60,3 @@ export default function EvaluationPage() {
     </main>
   );
 }
-

@@ -1,21 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "Wildfire Early Warning System",
-  description: "ML-first wildfire risk forecasting and decision support",
+  title: "Wildfire Monitor",
+  description: "Real-time wildfire risk monitoring, ML-driven early warning and decision support",
 };
 
 export default function RootLayout({
@@ -24,13 +13,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en">
+      <body>
         {children}
-        <Toaster />
+        <Toaster
+          theme="dark"
+          toastOptions={{
+            style: {
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              color: "var(--text)",
+              fontFamily: "inherit",
+              fontSize: "0.7rem",
+            },
+          }}
+        />
       </body>
     </html>
   );

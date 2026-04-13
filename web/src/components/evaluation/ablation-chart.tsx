@@ -1,19 +1,16 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Panel } from "@/components/ui/panel";
 
 export function AblationChart({ ablation }: { ablation: Record<string, number> }) {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Ablation Summary</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-2 text-sm">
+    <Panel title="Ablation Summary">
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.2rem" }}>
         {Object.entries(ablation).map(([key, value]) => (
-          <p key={key}>
-            {key}: <strong>{Number(value).toFixed(4)}</strong>
-          </p>
+          <div key={key} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem" }}>
+            <span style={{ textTransform: "uppercase", color: "var(--text-dim)" }}>{key}</span>
+            <span style={{ fontWeight: 600 }}>{Number(value).toFixed(4)}</span>
+          </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </Panel>
   );
 }
-
