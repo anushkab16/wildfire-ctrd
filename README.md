@@ -122,7 +122,13 @@ Algerian_forest_fires_dataset.csv
 ### 5. Run the project
 
 ```
-python main.py
+python main.py --data Algerian_forest_fires_dataset.csv
+```
+
+### 6. Run simple UI
+
+```
+streamlit run app.py
 ```
 
 ---
