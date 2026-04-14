@@ -17,32 +17,39 @@ A detailed, beginner-friendly walkthrough of every piece of this project, what i
    - 5.4 [Step 4: Live Data Enrichment](#54-step-4-live-data-enrichment)
    - 5.5 [Step 5: Dynamic Weighting](#55-step-5-dynamic-weighting)
    - 5.6 [Step 6: Computing the Composite Risk Score](#56-step-6-computing-the-composite-risk-score)
-   - 5.7 [Step 7: Multi-Horizon Forecasting](#57-step-7-multi-horizon-forecasting)
+   - 5.7 [Step 7: Multi-Horizon Forecasting (Simple Trend)](#57-step-7-multi-horizon-forecasting-simple-trend)
    - 5.8 [Step 8: Uncertainty Estimation](#58-step-8-uncertainty-estimation)
    - 5.9 [Step 9: Alert Classification (Calibrated Thresholds)](#59-step-9-alert-classification-calibrated-thresholds)
    - 5.10 [Step 10: Explainability](#510-step-10-explainability)
-6. [Live Data Sources (The Three APIs)](#6-live-data-sources-the-three-apis)
-   - 6.1 [Open-Meteo (Weather)](#61-open-meteo-weather)
-   - 6.2 [NASA FIRMS (Satellite Fire Detection)](#62-nasa-firms-satellite-fire-detection)
-   - 6.3 [Google Earth Engine (Vegetation and Land)](#63-google-earth-engine-vegetation-and-land)
-7. [Caching](#7-caching)
-8. [The Notification System](#8-the-notification-system)
-9. [Model Evaluation](#9-model-evaluation)
-   - 9.1 [Backtesting](#91-backtesting)
-   - 9.2 [Ablation Study](#92-ablation-study)
-10. [System Architecture](#10-system-architecture)
-    - 10.1 [Why a Single Next.js Application?](#101-why-a-single-nextjs-application)
-    - 10.2 [API Routes](#102-api-routes)
-    - 10.3 [File-Backed Persistence](#103-file-backed-persistence)
-    - 10.4 [Server-Sent Events (SSE)](#104-server-sent-events-sse)
-11. [The Dashboard (Frontend)](#11-the-dashboard-frontend)
-    - 11.1 [The D3.js World Map](#111-the-d3js-world-map)
-    - 11.2 [The Panel System](#112-the-panel-system)
-    - 11.3 [Masonry Grid Layout](#113-masonry-grid-layout)
-    - 11.4 [Dark/Light Theme Toggle](#114-darklight-theme-toggle)
-    - 11.5 [Settings and Preset Profiles](#115-settings-and-preset-profiles)
-    - 11.6 [All Dashboard Panels Explained](#116-all-dashboard-panels-explained)
-12. [The Original Python Pipeline](#12-the-original-python-pipeline)
+6. [The Python ML Models (ARIMA, Gradient Boosting, Exponential Smoothing, Granger Causality)](#6-the-python-ml-models)
+   - 6.1 [How the Python Bridge Works](#61-how-the-python-bridge-works)
+   - 6.2 [Live Context Injection](#62-live-context-injection)
+   - 6.3 [ARIMA](#63-arima)
+   - 6.4 [Exponential Smoothing (Holt-Winters)](#64-exponential-smoothing-holt-winters)
+   - 6.5 [Gradient Boosting Regressor](#65-gradient-boosting-regressor)
+   - 6.6 [Ensemble Averaging](#66-ensemble-averaging)
+   - 6.7 [Granger Causality](#67-granger-causality)
+7. [Live Data Sources (The Three APIs)](#7-live-data-sources-the-three-apis)
+   - 7.1 [Open-Meteo (Weather)](#71-open-meteo-weather)
+   - 7.2 [NASA FIRMS (Satellite Fire Detection)](#72-nasa-firms-satellite-fire-detection)
+   - 7.3 [Google Earth Engine (Vegetation and Land)](#73-google-earth-engine-vegetation-and-land)
+8. [Caching](#8-caching)
+9. [The Notification System](#9-the-notification-system)
+10. [Model Evaluation](#10-model-evaluation)
+    - 10.1 [Backtesting](#101-backtesting)
+    - 10.2 [Ablation Study](#102-ablation-study)
+11. [System Architecture](#11-system-architecture)
+    - 11.1 [The Two Pipelines and How They Connect](#111-the-two-pipelines-and-how-they-connect)
+    - 11.2 [API Routes](#112-api-routes)
+    - 11.3 [File-Backed Persistence](#113-file-backed-persistence)
+    - 11.4 [Server-Sent Events (SSE)](#114-server-sent-events-sse)
+12. [The Dashboard (Frontend)](#12-the-dashboard-frontend)
+    - 12.1 [The D3.js World Map](#121-the-d3js-world-map)
+    - 12.2 [The Panel System](#122-the-panel-system)
+    - 12.3 [Masonry Grid Layout](#123-masonry-grid-layout)
+    - 12.4 [Dark/Light Theme Toggle](#124-darklight-theme-toggle)
+    - 12.5 [Settings and Preset Profiles](#125-settings-and-preset-profiles)
+    - 12.6 [All Dashboard Panels Explained](#126-all-dashboard-panels-explained)
 13. [Technology Stack Glossary](#13-technology-stack-glossary)
 14. [The Development Journey (What Went Wrong and What We Learned)](#14-the-development-journey-what-went-wrong-and-what-we-learned)
 15. [How to Run the Project](#15-how-to-run-the-project)
@@ -54,6 +61,10 @@ A detailed, beginner-friendly walkthrough of every piece of this project, what i
 Wildfire Monitor is a **real-time wildfire risk monitoring and early warning system**. Think of it as a weather forecast app, but instead of telling you "it will rain tomorrow," it tells you "the wildfire risk at this location is HIGH because the vegetation is dry and the wind is strong, and here is what you should do about it."
 
 The key difference between this and other wildfire prediction tools is that ours does not just spit out a single number like "risk = 0.73." Instead, it breaks that number down into five meaningful pieces, so that a forest ranger or emergency coordinator can understand *why* the risk is high and *what specific action* to take.
+
+The system has two ML pipelines that work together:
+- A **TypeScript pipeline** that runs inside the web app and handles quick forecasting, live API enrichment, and the dashboard.
+- A **Python pipeline** that runs the heavy ML models (ARIMA, Gradient Boosting, Exponential Smoothing, Granger Causality from scikit-learn and statsmodels) and is called by the web app via a bridge script.
 
 **Analogy:** Imagine going to a doctor who says "you are 73% sick." That is not very helpful. You would want to know: "Your blood pressure is high, your cholesterol is normal, your vitamin D is low." That breakdown lets you take targeted action. Our system does the same thing, but for wildfire risk.
 
@@ -167,7 +178,9 @@ Raw data from CSV files is messy. Column names might have extra spaces, some row
 
 **Analogy:** You receive a handwritten survey from 244 people. Before you can analyze it, you need to decipher messy handwriting, fix misspellings, and throw out forms where people left answers blank. That is data cleaning.
 
-**Where in code:** `cleanRows()` function in `web/src/lib/ctrd.ts`
+**Where in code:**
+- Python: `load_data()` in `ingestion.py`
+- TypeScript: `cleanRows()` in `web/src/lib/ctrd.ts`
 
 ---
 
@@ -176,6 +189,8 @@ Raw data from CSV files is messy. Column names might have extra spaces, some row
 Different features in our dataset have wildly different scales. Temperature ranges from 22 to 42 degrees. DC ranges from 7 to 220. If we tried to combine these directly, the DC values would dominate simply because their numbers are bigger, not because they are more important.
 
 **What we do:** Min-Max Normalization. For each feature, we transform its values so that the smallest observed value becomes 0 and the largest becomes 1. Everything in between is proportionally scaled.
+
+The Python version uses **scikit-learn's `MinMaxScaler`**, which is the standard ML library implementation of this operation. The TypeScript version implements the same formula manually.
 
 **The formula:**
 ```
@@ -190,7 +205,9 @@ Now both are on the same 0-to-1 scale and can be fairly compared and combined.
 
 **Analogy:** Imagine comparing a student's Math score (out of 100) with their PE score (out of 10). If the math score is 80 and the PE score is 8, you cannot just say "math is more important because 80 > 8." You need to convert both to percentages first: Math = 80%, PE = 80%. Now they are comparable. That is normalization.
 
-**Where in code:** `normalizeColumns()` function in `web/src/lib/ctrd.ts`
+**Where in code:**
+- Python: `MinMaxScaler` in `feature_engineering.py`
+- TypeScript: `normalizeColumns()` in `web/src/lib/ctrd.ts`
 
 ---
 
@@ -238,7 +255,9 @@ This is the heart of CT-RD. We take the normalized features and combine them int
 
 **Analogy:** The difference between a controlled campfire and a raging inferno. Both are fires, but the impact is vastly different. This component captures the destructive potential.
 
-**Where in code:** `buildComponents()` function in `web/src/lib/ctrd.ts`
+**Where in code:**
+- Python: `create_components()` in `feature_engineering.py`
+- TypeScript: `buildComponents()` in `web/src/lib/ctrd.ts`
 
 ---
 
@@ -246,11 +265,21 @@ This is the heart of CT-RD. We take the normalized features and combine them int
 
 The dataset gives us historical snapshots from 2012. But if you want to know the wildfire risk *right now* at a specific location, historical data alone is not enough. You need to know what the weather is like *today*, whether there are active fires *nearby*, and what the vegetation looks like *currently*.
 
-This is where our three API integrations come in. They overlay real-time information on top of the historical analysis. (These APIs are explained in detail in Section 6.)
+This is where our three API integrations come in (detailed in Section 7). They overlay real-time information on top of the historical analysis.
 
-The live weather data (temperature, humidity, wind) is blended into the component calculations so that the risk scores reflect current conditions, not just historical averages.
+**How it works in the TypeScript pipeline:** The live weather data (temperature, humidity, wind) is blended into the dynamic weight calculations so that the risk scores reflect current conditions at the selected coordinates.
+
+**How it works in the Python pipeline:** The web app fetches live weather, satellite fire data, and vegetation data for the selected coordinates, then passes all of this to the Python script as a "live context" JSON file. The Python script creates a **synthetic row** that blends the last historical row from the CSV with the live conditions, and appends it to the dataset before running the ML models. This means the ARIMA, Gradient Boosting, and Exponential Smoothing models train on data that includes current conditions at the chosen location, producing location-specific predictions.
+
+**Example:** If you pick Los Angeles (35C, 25% humidity, strong wind, 12 active fire hotspots nearby), the synthetic row will have high temperature, low humidity, high wind, and boosted fire indices. If you pick London (18C, 75% humidity, calm, no fires), the synthetic row will have low temperature, high humidity, and no fire boosts. The ML models then produce different forecasts for each location.
 
 **Analogy:** Imagine predicting traffic on your commute. Historical data tells you that Mondays at 8 AM are usually bad. But if there is a live traffic camera showing a major accident right now, that real-time information dramatically changes your prediction. Live data enrichment is the "traffic camera" for our wildfire model.
+
+**Where in code:**
+- Live context injection: `inject_live_row()` in `ml_bridge.py`
+- Weather fetch: `web/src/lib/ingestion/weather.ts`
+- Fire data fetch: `web/src/lib/ingestion/firms.ts`
+- Vegetation data fetch: `web/src/lib/ingestion/gee.ts`
 
 ---
 
@@ -258,20 +287,33 @@ The live weather data (temperature, humidity, wind) is blended into the componen
 
 Not all five components are equally important at all times. On a windy day, the "spread" component matters more than usual. During a drought, "fuel" and "ignition" deserve extra weight. If it has been raining recently, "containment" becomes less of a concern.
 
-**How it works:**
-1. We start with equal weights: each component gets 0.2 (20%).
-2. We look at the current conditions (from the latest data row and the live API data).
-3. We adjust the weights:
-   - High drought code or high wind? Increase the fuel weight by 0.08.
-   - Very high wind? Increase the spread weight by 0.10.
-   - High temperature? Increase the ignition weight by 0.08.
-   - High burn severity from satellite data? Increase the impact weight by 0.10.
-   - High vegetation dryness from satellite data? Add another 0.05 to fuel.
-4. We re-normalize so all five weights still add up to 1.0.
+**How it works (component-aware approach):**
+
+1. Start with a small base weight (0.10) for each component.
+2. Add the **actual component value** to its own weight. Components with higher risk values naturally get higher weights. If ignition = 0.7 and fuel = 0.05, ignition's weight grows far more than fuel's.
+3. Look at the **recent trend** over the last 7 timesteps. If a component is trending upward (risk is increasing), give it an additional boost.
+4. Apply condition-based adjustments from the raw features:
+   - High temperature (> 0.4 normalized): boost ignition weight proportionally.
+   - Low humidity (< 0.5 normalized): boost ignition weight.
+   - High wind (> 0.3 normalized): boost spread weight.
+   - High drought code (> 0.3 normalized): boost both fuel and containment.
+5. In the TypeScript version, also factor in live weather data:
+   - Live wind > 20 km/h: boost spread.
+   - Live temperature > 32C: boost ignition.
+   - Live humidity < 30%: boost ignition.
+   - High vegetation dryness from satellite: boost fuel.
+   - High burn severity from satellite: boost impact.
+6. Re-normalize so all five weights add up to 1.0.
+
+**Why this approach?** An earlier version used simple threshold checks (e.g., "if DC > 0.6, add 0.1 to fuel"). The problem was that on moderate days (which is most days in the dataset), no thresholds triggered and all weights stayed at a flat 20%. The component-aware approach guarantees differentiated weights because it uses the actual values, not just binary thresholds.
+
+**Example output:** For the Algerian dataset, the weights come out as: Ignition 35.8%, Spread 32.0%, Fuel 11.7%, Containment 11.3%, Impact 9.2%. This correctly reflects that ignition and spread have the highest component values, so they deserve the most weight.
 
 **Analogy:** A doctor evaluating a patient's overall health does not always weigh each vital sign equally. If the patient has a fever, the temperature reading becomes far more important than their blood pressure. If they are having chest pain, the heart rate takes priority. Our dynamic weighting works the same way: current conditions tell us which risk dimension to pay the most attention to.
 
-**Where in code:** `deriveDynamicWeights()` function in `web/src/lib/ctrd.ts`
+**Where in code:**
+- Python: `compute_weights()` in `dynamic_weights.py`
+- TypeScript: `deriveDynamicWeights()` in `web/src/lib/ctrd.ts`
 
 ---
 
@@ -285,45 +327,40 @@ Risk = (w_ignition * ignition) + (w_spread * spread) + (w_fuel * fuel) + (w_cont
 
 where all weights sum to 1.0.
 
-**Example:** If the components are [ignition=0.7, spread=0.5, fuel=0.8, containment=0.6, impact=0.4] and the weights are [0.25, 0.25, 0.20, 0.15, 0.15], then:
+**Example:** If the components are [ignition=0.7, spread=0.5, fuel=0.8, containment=0.6, impact=0.4] and the weights are [0.358, 0.320, 0.117, 0.113, 0.092], then:
 
 ```
-Risk = (0.25 * 0.7) + (0.25 * 0.5) + (0.20 * 0.8) + (0.15 * 0.6) + (0.15 * 0.4)
-     = 0.175 + 0.125 + 0.160 + 0.090 + 0.060
-     = 0.610
+Risk = (0.358 * 0.7) + (0.320 * 0.5) + (0.117 * 0.8) + (0.113 * 0.6) + (0.092 * 0.4)
+     = 0.251 + 0.160 + 0.094 + 0.068 + 0.037
+     = 0.609
 ```
 
 The result is always between 0 (no risk) and 1 (maximum risk).
 
 **Analogy:** Your semester GPA. Each course has a different number of credits (weights), and you multiply each grade by its credits, sum everything up, and divide by total credits. This is essentially the same operation.
 
-**Where in code:** `analyzeRisk()` function in `web/src/lib/ctrd.ts`
+**Where in code:**
+- Python: `compute_composite()` in `utils.py`
+- TypeScript: `analyzeRisk()` in `web/src/lib/ctrd.ts`
 
 ---
 
-### 5.7 Step 7: Multi-Horizon Forecasting
+### 5.7 Step 7: Multi-Horizon Forecasting (Simple Trend)
 
-We do not just want to know the risk right now. We want to predict what it will be in 24 hours, in 72 hours, and in 7 days. Each of these is called a "forecast horizon."
+The TypeScript pipeline uses a lightweight trending-average approach for quick in-browser forecasting at 24h, 72h, and 7-day horizons.
 
 **How it works (for each component individually):**
 
-1. Take the last 7 data points for a given component (e.g., the last 7 days of "ignition" scores).
-2. Compute the **mean** (average) of these 7 values. This is the "recent average."
-3. Compute the **drift**: how much the component has been trending up or down. We calculate this as: `drift = (last_value - first_value) / 6` (the slope of the line from first to last).
-4. Extrapolate into the future: `predicted = mean + (drift * horizon_scale)`
-   - For 24h: horizon_scale = 1.0 (one day ahead)
-   - For 72h: horizon_scale = 3.0 (three days ahead)
-   - For 7 days: horizon_scale = 7.0 (seven days ahead)
-5. Clamp the result to [0, 1] so it stays valid.
-6. Apply the same dynamic weighting to combine the forecasted components into a predicted composite risk score.
+1. Take the last 7 data points for a given component.
+2. Compute the **mean** (average) of these values.
+3. Compute the **drift**: how much the component has been trending up or down. `drift = (last_value - first_value) / (count - 1)`.
+4. Extrapolate: `predicted = mean + (drift * horizon_hours / 24)`.
+5. Clamp the result to [0, 1].
+6. Apply the same dynamic weighting to combine the forecasted components.
 
-**Analogy:** Imagine you are tracking the water level in a river. For the past week, the level has been: 2m, 2.1m, 2.3m, 2.4m, 2.5m, 2.7m, 2.8m. The average is about 2.4m, and the trend is rising by roughly 0.13m per day. So you predict: tomorrow = 2.93m, in 3 days = 3.19m, in 7 days = 3.71m. Our forecasting does the same thing, but for each wildfire risk component.
+This is intentionally simple. The real ML forecasting (ARIMA, Gradient Boosting, Exponential Smoothing) is handled by the Python pipeline, described in Section 6.
 
-**Why is this "simple" and not a neural network?** We intentionally chose a lightweight forecasting method because:
-- It runs in milliseconds inside a browser/API request (no GPU needed).
-- It is easy to understand and verify (transparency for a course project).
-- It performs well over short horizons (24h), which is the most operationally relevant timeframe.
-- For a more advanced comparison, we note in the paper that LSTMs and Transformers could be evaluated in future work.
+**Analogy:** Imagine you are tracking the water level in a river. For the past week, the level has been: 2m, 2.1m, 2.3m, 2.4m, 2.5m, 2.7m, 2.8m. The average is about 2.4m, and the trend is rising by roughly 0.13m per day. So you predict: tomorrow = 2.93m, in 3 days = 3.19m. The TypeScript pipeline does the same thing for each wildfire risk component.
 
 **Where in code:** `forecastFromSeries()` in `web/src/lib/ml/forecast.ts`
 
@@ -394,7 +431,7 @@ We do NOT use fixed thresholds like "anything above 0.5 is RED." That would be a
 
 The system produces three pieces of explanatory information for every analysis:
 
-**1. Dominant Driver:** Which component is contributing the most to the risk? We look at the weighted contribution of each component (`weight * component_value`) and pick the one with the highest product. If "fuel" has weight 0.25 and value 0.9, its contribution is 0.225. If "spread" has weight 0.30 and value 0.6, its contribution is 0.18. Fuel wins, so "fuel" is the dominant driver.
+**1. Dominant Driver:** Which component is contributing the most to the risk? We look at the weighted contribution of each component (`weight * component_value`) and pick the one with the highest product.
 
 **Why it matters:** Knowing the dominant driver tells you what to focus on. If fuel is dominant, you consider vegetation management. If spread is dominant, you prepare for fast-moving fires and deploy aerial resources.
 
@@ -402,26 +439,177 @@ The system produces three pieces of explanatory information for every analysis:
 
 **3. Change Deltas:** For each component, we compute how much it has changed since the previous timestep. A positive delta means that component's risk is increasing. A negative delta means it is decreasing.
 
-**Example output:**
-- Dominant Driver: Fuel
-- Top Factors: Fuel (28%), Ignition (24%), Impact (20%), Spread (16%), Containment (12%)
-- Changes: Fuel +0.05 (increasing), Spread +0.12 (increasing sharply), Containment -0.03 (decreasing slightly)
-
 **Analogy:** A financial advisor does not just tell you "your portfolio lost 3% today." They tell you: "Tech stocks dropped 8% (dominant driver), energy was flat, and bonds gained 1%. The tech drop is accelerating compared to yesterday." That is explainability: telling you the what, the why, and the trend.
 
 **Where in code:** `deriveExplainability()` in `web/src/lib/ml/explainability.ts`
 
 ---
 
-## 6. Live Data Sources (The Three APIs)
+## 6. The Python ML Models
 
-### 6.1 Open-Meteo (Weather)
+This is where the real Machine Learning lives. The Python pipeline runs four established ML techniques from `scikit-learn` and `statsmodels`, and the web app calls it for every analysis.
+
+### 6.1 How the Python Bridge Works
+
+The web application is built in Next.js (JavaScript/TypeScript). The ML models are in Python. To connect them:
+
+1. When you click "Run Analysis" in the browser, the web server receives the CSV data and the coordinates.
+2. The server fetches live weather, satellite fire data, and vegetation data for those coordinates.
+3. The server writes the CSV to a temporary file and the live data to a JSON file.
+4. The server spawns a Python process: `.venv/bin/python3 ml_bridge.py /tmp/data.csv /tmp/context.json`.
+5. The Python script runs the full ML pipeline and prints a JSON result to stdout.
+6. The server reads that JSON output, parses it, and includes it in the API response.
+7. The browser displays the Python ML results in the "ML Model Predictions" and "Granger Causality" panels.
+
+If Python is not installed or the dependencies are missing, the web app still works. It just shows the TypeScript pipeline results and marks the Python ML panel as "Offline."
+
+**Analogy:** Think of it like a restaurant where the main kitchen (TypeScript) handles all orders, but for one specialty dish (the ML models), it calls a guest chef (Python) in a separate kitchen. The guest chef prepares the dish and sends it back through a serving window (stdout). If the guest chef is not available, the main kitchen still serves the rest of the menu.
+
+**Where in code:**
+- Python script: `ml_bridge.py`
+- TypeScript bridge: `web/src/lib/ml/python-bridge.ts`
+- API route integration: `web/src/app/api/analyze/route.ts`
+
+---
+
+### 6.2 Live Context Injection
+
+The Python pipeline receives a "live context" JSON containing the weather, satellite, and vegetation data fetched for the selected coordinates. It uses this to create a **synthetic data row** that is appended to the historical dataset before the ML models run.
+
+**How the synthetic row is created:**
+
+1. Take the last row of the cleaned historical dataset as the starting point.
+2. Blend in live weather: the synthetic row's temperature becomes a 50/50 mix of the historical value and the live reading (normalized to the 0-1 scale). Same for humidity and wind.
+3. Incorporate satellite fire detections: if there are active hotspots nearby, boost the FWI and ISI values (more active fires = higher fire intensity and spread indices).
+4. Incorporate vegetation dryness: if satellite data shows dry vegetation, boost DMC and DC values (drier organic layers = more fuel).
+5. Incorporate thermal anomaly: if the ground is hotter than normal, boost the temperature value.
+6. Incorporate burn severity: if recent burns are detected, boost FWI.
+7. Recompute all five risk components (ignition, spread, fuel, containment, impact) from the modified features.
+
+The result: when you select Los Angeles (hot, dry, windy, fires nearby), the dataset ends with a high-risk synthetic row. When you select London (cool, wet, calm, no fires), it ends with a low-risk synthetic row. The ML models train on and extrapolate from this modified data, producing different predictions for different locations.
+
+**Where in code:** `inject_live_row()` in `ml_bridge.py`
+
+---
+
+### 6.3 ARIMA
+
+**What is ARIMA?** Auto-Regressive Integrated Moving Average. It is one of the most widely used classical time series forecasting models. The name describes three operations:
+
+- **AR (Auto-Regressive, the "1" in ARIMA(1,1,1)):** The prediction depends on past values of the series. "Tomorrow's ignition risk depends on today's ignition risk." The "1" means we look back 1 timestep.
+
+- **I (Integrated, the middle "1"):** We difference the series once to make it stationary. Instead of predicting the risk level directly, we predict the *change* in risk level. This removes trends. If risk has been steadily climbing, differencing subtracts out that climb so the model can focus on fluctuations.
+
+  **Analogy:** If you want to predict tomorrow's stock price, it helps to instead predict the *change* from today to tomorrow. The overall upward trend is removed, and you focus on the daily fluctuations.
+
+- **MA (Moving Average, the last "1"):** The prediction also depends on past forecast errors. If the model overpredicted yesterday, it adjusts downward today. The "1" means we look at the error from 1 timestep ago.
+
+**In our system:** We run ARIMA(1,1,1) separately on each of the five risk components (ignition, spread, fuel, containment, impact). Each produces a one-step-ahead prediction.
+
+**Where in code:** `safe_forecast_arima()` in `ml_bridge.py`, which calls `statsmodels.tsa.arima.model.ARIMA`
+
+---
+
+### 6.4 Exponential Smoothing (Holt-Winters)
+
+**What is it?** A forecasting method that gives more weight to recent observations and progressively less weight to older ones. The idea is simple: recent data is more relevant than ancient data, but you do not want to throw away old data entirely.
+
+**How it works:** Each forecast is a weighted average of all past values, where the weights decay exponentially the further back you go. The most recent observation might get 40% weight, the one before that 24%, the one before that 14%, and so on. The "smoothing factor" (alpha) controls how fast the decay happens:
+- Alpha close to 1: almost all weight on the most recent value (very responsive to changes).
+- Alpha close to 0: weight spread evenly across many past values (very stable, slow to react).
+
+**Analogy:** Imagine you are guessing the temperature each day. If you weighted all 30 days of the past month equally, your guess would be very stable but slow to react to a sudden cold front. If you only looked at yesterday's temperature, you would react fast but be noisy. Exponential Smoothing finds a middle ground: it mostly trusts recent data but keeps a memory of the past.
+
+**In our system:** We run Exponential Smoothing on each of the five components separately. It is implemented using `statsmodels.tsa.holtwinters.ExponentialSmoothing`.
+
+**Where in code:** `safe_forecast_exp()` in `ml_bridge.py`
+
+---
+
+### 6.5 Gradient Boosting Regressor
+
+**What is it?** A machine learning algorithm from the `scikit-learn` library that builds an ensemble (a team) of many small decision trees, where each tree corrects the mistakes of the previous ones.
+
+**How it works, step by step:**
+
+1. Start with a very simple prediction (e.g., the mean of all values).
+2. Calculate the "residuals": how wrong this simple prediction is for each data point.
+3. Train a small decision tree to predict these residuals. Now you have a slightly better model.
+4. Calculate the new residuals (the mistakes the improved model still makes).
+5. Train another small decision tree on *these* residuals.
+6. Repeat this 100 times (n_estimators=100 in our config).
+7. The final prediction is the sum of the initial guess plus all 100 correction trees.
+
+**Why "gradient"?** Each new tree is trained to follow the gradient (direction of steepest descent) of the loss function. In simpler terms, each tree tries to make the biggest possible improvement given the current mistakes.
+
+**Why "boosting"?** Because each tree "boosts" (improves upon) the previous ensemble.
+
+**Analogy:** Imagine an exam where you make mistakes. Your teacher does not give you a completely new textbook. Instead, they look at exactly which questions you got wrong and create a targeted worksheet addressing only those mistakes. You study the worksheet and improve. Then they look at what you still get wrong and create another targeted worksheet. After 100 iterations of this, you have improved enormously. Each worksheet is a "tree" in gradient boosting.
+
+**In our system:** We use `sklearn.ensemble.GradientBoostingRegressor` with 100 trees and max depth 3. The input is the timestep index (0, 1, 2, ..., N) and the target is the component value at that timestep. The model learns the temporal pattern and predicts the value at timestep N+1.
+
+**Where in code:** `safe_forecast_gb()` in `ml_bridge.py`
+
+---
+
+### 6.6 Ensemble Averaging
+
+We run all three models (ARIMA, Exponential Smoothing, Gradient Boosting) on all five components and then **average their predictions** for each component. This is called **ensemble averaging** or **model averaging**.
+
+**Why average multiple models?** Different models have different strengths and weaknesses:
+- ARIMA is good at capturing short-term trends and autocorrelation (today's value depends on yesterday's).
+- Exponential Smoothing is good at smooth, gradual changes.
+- Gradient Boosting is good at capturing nonlinear patterns.
+
+By averaging them, we get a prediction that is more robust than any single model. If one model makes a bad prediction, the other two dilute the error.
+
+**Analogy:** If you ask three friends to estimate the distance to a building, and they say 100m, 120m, and 110m, the average (110m) is likely closer to the truth than any single guess. This is the "wisdom of crowds" effect. Ensemble averaging applies this principle to ML models.
+
+The ensemble composite score is then computed using the dynamic weights, and an alert level and dominant driver are determined.
+
+**Where in code:** The ensemble averaging loop in `run_pipeline()` in `ml_bridge.py`
+
+---
+
+### 6.7 Granger Causality
+
+**What is Granger Causality?** It is a statistical hypothesis test that determines whether the past values of one time series are useful for predicting the future values of another. If knowing yesterday's wind speed helps you predict today's fire risk better than just knowing yesterday's fire risk alone, we say "wind speed Granger-causes fire risk."
+
+**Important:** Granger Causality does not prove true causation (in the philosophical sense). It only proves statistical predictive usefulness. The name comes from Nobel Prize-winning economist Clive Granger who formalized the concept.
+
+**How the test works:**
+
+1. Take two time series: X (e.g., spread) and Y (e.g., ignition).
+2. Fit a model that predicts Y using only past values of Y. Measure the prediction error (SSR1).
+3. Fit another model that predicts Y using past values of both Y and X. Measure the prediction error (SSR2).
+4. If SSR2 is significantly smaller than SSR1 (using an F-test), then X provides useful predictive information about Y. We say "X Granger-causes Y."
+5. The p-value from the F-test tells us the statistical significance. If p < 0.05, the relationship is significant at the 95% confidence level.
+
+**In our system:** We test all 25 pairs of the 5 components (5 x 5 matrix), with up to 4 lags (looking back 1 to 4 timesteps). The result is a 5x5 matrix where each cell contains a p-value:
+- Green cells (p < 0.05): statistically significant causal influence. For example, if the (spread, ignition) cell is 0.0001, it means past spread values significantly help predict future ignition values.
+- Red cells (p > 0.05): no significant causal influence detected.
+
+**What does the matrix tell us?** It reveals the hidden causal structure of wildfire risk. For example, in our dataset, spread Granger-causes ignition (p=0.00005), and containment Granger-causes fuel (p=0.005). This means that rising spread conditions are a leading indicator of future ignition events, and worsening containment conditions predict future fuel accumulation.
+
+**Analogy:** Imagine you run a restaurant and want to know what predicts tomorrow's sales. You test: does yesterday's weather predict tomorrow's sales? Does yesterday's foot traffic predict tomorrow's sales? Does yesterday's menu predict tomorrow's sales? Granger Causality runs these tests systematically and tells you which "leading indicators" actually have predictive power.
+
+**Where in code:**
+- `run_granger()` in `ml_bridge.py`, which calls `statsmodels.tsa.stattools.grangercausalitytests`
+- `causal_analysis.py` (the original standalone version)
+
+---
+
+## 7. Live Data Sources (The Three APIs)
+
+### 7.1 Open-Meteo (Weather)
 
 **What it is:** A free, open-source weather forecast API. No API key needed.
 
 **What we fetch:** Current temperature (Celsius), relative humidity (%), wind speed (km/h), and precipitation probability (%) for a given latitude and longitude.
 
-**How we use it:** The live weather data is blended into the risk component calculations. For example, if the historical data suggests moderate wind but the live API says winds are currently at 35 km/h, the "spread" component gets boosted.
+**How we use it:** The live weather data feeds into both pipelines:
+- TypeScript: directly adjusts dynamic weights (hot temperature boosts ignition weight, etc.)
+- Python: normalized and blended into the synthetic data row that the ML models train on.
 
 **The endpoint:** `https://api.open-meteo.com/v1/forecast?latitude=X&longitude=Y&current=temperature_2m,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,...`
 
@@ -429,7 +617,7 @@ The system produces three pieces of explanatory information for every analysis:
 
 ---
 
-### 6.2 NASA FIRMS (Satellite Fire Detection)
+### 7.2 NASA FIRMS (Satellite Fire Detection)
 
 **What it is:** The Fire Information for Resource Management System, operated by NASA. It uses thermal imaging from satellites (VIIRS and MODIS instruments) to detect active fires anywhere on Earth, updated multiple times per day.
 
@@ -442,13 +630,13 @@ The system produces three pieces of explanatory information for every analysis:
 - **Bounding Box:** A rectangular area defined by four coordinates (west, south, east, north) that tells the API "give me all fire detections within this rectangle."
 - **VIIRS:** Visible Infrared Imaging Radiometer Suite. A sensor on the Suomi NPP and NOAA-20 satellites. It can detect fires as small as a few hundred square meters.
 
-**How we use it:** The count of active hotspots, average FRP, and ratio of high-confidence detections feed into the dynamic weighting system. Many nearby active fires increase the urgency of the alert.
+**How we use it:** The count of active hotspots and average FRP are passed to the Python pipeline as part of the live context. Active fires nearby boost the FWI and ISI values in the synthetic row, making the ML models predict higher risk.
 
 **Where in code:** `web/src/lib/ingestion/firms.ts`
 
 ---
 
-### 6.3 Google Earth Engine (Vegetation and Land)
+### 7.3 Google Earth Engine (Vegetation and Land)
 
 **What it is:** Google Earth Engine (GEE) is a cloud-based platform that provides access to decades of satellite imagery and geospatial datasets. We use it to get information about the land and vegetation at a target location.
 
@@ -462,11 +650,9 @@ The system produces three pieces of explanatory information for every analysis:
 
    **Analogy:** Looking at a lawn from above. A lush green lawn has high NDVI. A brown, parched lawn has low NDVI. Satellites can do this for every patch of land on Earth.
 
-2. **Thermal Anomaly:**
-   - The land surface temperature compared to what is normal for that location and time of year. A positive anomaly means the ground is hotter than usual, which can indicate drought stress or nearby fire activity.
+2. **Thermal Anomaly:** The land surface temperature compared to what is normal for that location and time of year. A positive anomaly means the ground is hotter than usual, which can indicate drought stress or nearby fire activity.
 
-3. **Burn Severity Index:**
-   - Measures how badly an area has already been burned, which affects the likelihood of fire spread (recently burned areas may have less fuel, but adjacent unburned areas may be at higher risk).
+3. **Burn Severity Index:** Measures how badly an area has already been burned, which affects the likelihood of fire spread.
 
 **The fallback:** GEE requires a proxy server and authentication, which may not be configured in every deployment. If the GEE proxy is not available, the system uses **heuristic estimates** (educated guesses derived from the latitude, longitude, and other available data). This ensures the system always produces results, even without GEE.
 
@@ -474,7 +660,7 @@ The system produces three pieces of explanatory information for every analysis:
 
 ---
 
-## 7. Caching
+## 8. Caching
 
 Every time you run an analysis, the system calls up to three external APIs. These API calls take time (typically 200-500ms each) and some have rate limits (NASA FIRMS, for example). If you run multiple analyses for nearby locations within a short period, it is wasteful to make the same API call repeatedly.
 
@@ -496,7 +682,7 @@ Every time you run an analysis, the system calls up to three external APIs. Thes
 
 ---
 
-## 8. The Notification System
+## 9. The Notification System
 
 When the analysis produces a RED or CRITICAL alert, the system can automatically notify people through two channels:
 
@@ -524,11 +710,11 @@ The system can send alerts to a Telegram chat or group via a Telegram Bot.
 
 ---
 
-## 9. Model Evaluation
+## 10. Model Evaluation
 
 A machine learning system is only as good as its ability to prove that it works. We evaluate our pipeline through two methods.
 
-### 9.1 Backtesting
+### 10.1 Backtesting
 
 **What is backtesting?** It is a technique where you pretend you are in the past and test whether your model would have made correct predictions. It is the standard way to evaluate forecasting models.
 
@@ -568,7 +754,7 @@ A machine learning system is only as good as its ability to prove that it works.
 
 ---
 
-### 9.2 Ablation Study
+### 10.2 Ablation Study
 
 **What is an ablation study?** In machine learning, an ablation study tests how much each piece of your system contributes to the overall performance. You "ablate" (remove) components one at a time and see how performance changes.
 
@@ -588,29 +774,42 @@ By comparing the MAE across these three setups, we can quantify the value of eac
 
 ---
 
-## 10. System Architecture
+## 11. System Architecture
 
-### 10.1 Why a Single Next.js Application?
+### 11.1 The Two Pipelines and How They Connect
 
-We tried multiple architectures during development (see Section 14). The final choice is a **monolithic Next.js application** where both the frontend (what you see in the browser) and the backend (the ML pipeline, API calls, data persistence) live in one codebase and one process.
+The project has **two ML pipelines** that work together:
 
-**What is Next.js?** Next.js is a React-based web framework that supports both client-side rendering (the browser runs the code) and server-side logic (API routes that run on the server). It uses a system called the "App Router" where files in the `app/` directory automatically become pages or API endpoints based on their file path.
+**Pipeline 1: TypeScript (runs in Node.js)**
+- Handles all web interactions, API fetching, caching, and quick in-browser computations.
+- Uses a lightweight trend-extrapolation forecasting method.
+- Runs the Forecasts panel (24h/72h/7d predictions), Explainability, Alerts, and Evaluation.
+- Always available, instant response.
 
-**Why monolithic for this project?**
-- One `npm install` and one `npm run dev` to get everything running.
-- No need to coordinate two separate processes (e.g., a Python backend and a JavaScript frontend).
-- Simpler deployment (one application to host).
-- For a college course project, this eliminates an entire class of infrastructure bugs.
+**Pipeline 2: Python (runs via subprocess)**
+- Runs the real ML models: ARIMA, Exponential Smoothing, Gradient Boosting, Granger Causality.
+- Uses `scikit-learn` and `statsmodels` libraries.
+- Called by the TypeScript API route via `child_process.execFile()`.
+- Receives the CSV data plus a live context JSON with location-specific weather, fire, and vegetation data.
+- Returns a JSON blob with per-model predictions, ensemble scores, and the Granger matrix.
+- Populates the "ML Model Predictions" and "Granger Causality Matrix" panels.
+
+**Why two pipelines?** The Python ML libraries (statsmodels, scikit-learn) cannot run in the browser or in Node.js natively. They need a Python runtime. The subprocess bridge keeps the project as a single application (one `npm run dev`) while still using the best tools for each job.
+
+**Where in code:**
+- TypeScript pipeline: `web/src/lib/ctrd.ts`
+- Python pipeline: `ml_bridge.py` (calls `ingestion.py`, `feature_engineering.py`, `causal_analysis.py`, `forecasting.py`, `dynamic_weights.py`, `alerting.py`, `utils.py`)
+- Bridge: `web/src/lib/ml/python-bridge.ts`
 
 ---
 
-### 10.2 API Routes
+### 11.2 API Routes
 
 Next.js lets you put files in `app/api/` and they become HTTP endpoints. Here is every API route in the project and what it does:
 
 | Endpoint | Method | What It Does |
 |----------|--------|-------------|
-| `/api/analyze` | POST | Accepts CSV data, coordinates, and horizon preferences. Runs the full CT-RD pipeline. Returns the complete analysis (risk score, alert level, forecasts, explainability, hotspots). |
+| `/api/analyze` | POST | Accepts CSV data, coordinates, and horizon preferences. Fetches live data, runs both the TypeScript and Python pipelines, merges results, and returns the complete analysis. |
 | `/api/global-snapshot` | GET | Returns a summary of the global situation: number of active hotspots, critical regions, average global risk, top 5 highest-risk regions, and a live event feed. |
 | `/api/sample-csv` | GET | Returns the built-in Algerian dataset as CSV text, so users do not need to upload a file to try the system. |
 | `/api/watchlists` | GET/POST/PATCH | Manage saved regions that you want to monitor regularly. |
@@ -621,7 +820,7 @@ Next.js lets you put files in `app/api/` and they become HTTP endpoints. Here is
 
 ---
 
-### 10.3 File-Backed Persistence
+### 11.3 File-Backed Persistence
 
 The application needs to remember things between requests: saved watchlists, past risk analyses, and alert history. Instead of requiring a database like PostgreSQL or MongoDB, we use a simple approach: a JSON file on disk.
 
@@ -637,7 +836,7 @@ The application needs to remember things between requests: saved watchlists, pas
 
 ---
 
-### 10.4 Server-Sent Events (SSE)
+### 11.4 Server-Sent Events (SSE)
 
 **What is SSE?** Server-Sent Events is a web standard that allows a server to push real-time updates to the browser without the browser having to repeatedly ask "any updates yet?" (which is called polling).
 
@@ -654,9 +853,9 @@ In our system, the dashboard also has a 60-second polling interval as a fallback
 
 ---
 
-## 11. The Dashboard (Frontend)
+## 12. The Dashboard (Frontend)
 
-### 11.1 The D3.js World Map
+### 12.1 The D3.js World Map
 
 The map is the centerpiece of the dashboard. It takes up the full width of the screen and shows the entire world using an **equirectangular projection**.
 
@@ -681,7 +880,7 @@ The map is the centerpiece of the dashboard. It takes up the full width of the s
 
 ---
 
-### 11.2 The Panel System
+### 12.2 The Panel System
 
 Below the map, all information is organized into **panels**. Each panel is a compact, dark-themed container with:
 
@@ -697,7 +896,7 @@ This design is inspired by the Situation Monitor project and mimics the look of 
 
 ---
 
-### 11.3 Masonry Grid Layout
+### 12.3 Masonry Grid Layout
 
 The panels are arranged in a **masonry grid**: a layout where items flow into columns, filling in gaps like bricks in a wall. This maximizes the use of screen space and avoids large empty areas.
 
@@ -707,7 +906,7 @@ The panels are arranged in a **masonry grid**: a layout where items flow into co
 
 ---
 
-### 11.4 Dark/Light Theme Toggle
+### 12.4 Dark/Light Theme Toggle
 
 The dashboard defaults to a dark terminal theme (black backgrounds, green accents, monospace fonts) but can be switched to a light theme with a single button click.
 
@@ -722,13 +921,13 @@ The dashboard defaults to a dark terminal theme (black backgrounds, green accent
 
 ---
 
-### 11.5 Settings and Preset Profiles
+### 12.5 Settings and Preset Profiles
 
 The dashboard has many panels, and not everyone needs all of them. The Settings modal lets you control which panels are visible.
 
 **Three preset profiles:**
 
-1. **Researcher:** All 11 panels visible. For someone who wants the full ML detail: evaluation metrics, ablation results, component breakdowns, everything.
+1. **Researcher:** All 13 panels visible. For someone who wants the full ML detail: model predictions, Granger Causality, evaluation metrics, ablation results, component breakdowns, everything.
 2. **Operations:** Only the operationally critical panels: risk analysis, active fires, live feed, alerts, and notifications. For someone who needs to make quick decisions.
 3. **Minimal:** Only the risk analysis panel. The simplest possible view.
 
@@ -736,61 +935,33 @@ You can also toggle individual panels on or off using checkboxes.
 
 ---
 
-### 11.6 All Dashboard Panels Explained
+### 12.6 All Dashboard Panels Explained
 
 1. **Risk Analysis:** The main control panel. Upload a CSV (or use the built-in dataset), enter coordinates, select a forecast horizon, and click "Run Analysis." Shows the risk score, alert level, dominant driver, recommended action, and all five component values.
 
-2. **Active Fires:** Displays the number of fire hotspots detected by NASA FIRMS near the analyzed region, along with the average Fire Radiative Power and the confidence ratio.
+2. **ML Model Predictions:** Shows the output of the three Python ML models (ARIMA, Exponential Smoothing, Gradient Boosting) side by side for each of the five risk components. Below that, shows the ensemble (averaged) composite score, alert level, dominant driver, and the dynamic weights. This panel makes the machine learning visible and front-center. It shows "Connected" when the Python pipeline is working and "Offline" when Python is not available.
 
-3. **Live Feed:** A chronological list of recent events: analyses run, alerts triggered, system status changes.
+3. **Granger Causality Matrix:** Displays the 5x5 p-value matrix from the Granger Causality test. Rows represent the "cause" and columns represent the "effect." Green cells (p < 0.05) indicate statistically significant causal relationships. This panel proves that the system has identified genuine causal structure in the data, not just correlations.
 
-4. **Forecasts:** Shows the predicted risk score for each horizon (24h, 72h, 7d) with confidence intervals and per-component breakdowns.
+4. **Active Fires:** Displays the number of fire hotspots detected by NASA FIRMS near the analyzed region, along with the average Fire Radiative Power and the confidence ratio.
 
-5. **Explainability:** Shows the dominant driver, top contributing factors with percentages, and change deltas (how each component shifted since the previous timestep).
+5. **Live Feed:** A chronological list of recent events: analyses run, alerts triggered, system status changes.
 
-6. **Alerts:** A list of all triggered alerts with severity, status (triggered/delivered/acknowledged), and timestamp.
+6. **Forecasts:** Shows the predicted risk score for each horizon (24h, 72h, 7d) with confidence intervals and per-component breakdowns.
 
-7. **Watchlists:** Saved regions that you want to monitor repeatedly. Each entry has coordinates, a name, and an enable/disable toggle.
+7. **Explainability:** Shows the dominant driver, top contributing factors with percentages, and change deltas (how each component shifted since the previous timestep).
 
-8. **Notifications:** Configuration for email and Telegram alert recipients.
+8. **Alerts:** A list of all triggered alerts with severity, status (triggered/delivered/acknowledged), and timestamp.
 
-9. **Model Evaluation:** Runs backtesting and ablation study on the built-in dataset and displays the metrics (MAE, RMSE, Precision, Recall, F1, ablation comparison).
+9. **Watchlists:** Saved regions that you want to monitor repeatedly. Each entry has coordinates, a name, and an enable/disable toggle.
 
-10. **Risk Timeline:** An SVG sparkline chart showing how the risk score has changed over the last 30 timesteps, color-coded by severity (green, yellow, orange, red, crimson).
+10. **Notifications:** Configuration for email and Telegram alert recipients.
 
-11. **Compare Regions:** Lets you pick two previously analyzed regions and compare them side by side: risk scores, alert levels, dominant drivers, and component breakdowns.
+11. **Model Evaluation:** Runs backtesting and ablation study on the built-in dataset and displays the metrics (MAE, RMSE, Precision, Recall, F1, ablation comparison).
 
----
+12. **Risk Timeline:** An SVG sparkline chart showing how the risk score has changed over the last 30 timesteps, color-coded by severity (green, yellow, orange, red, crimson).
 
-## 12. The Original Python Pipeline
-
-Before the web application was built, the project existed as a Python command-line pipeline. This original code is still in the repository for reference.
-
-**The Python modules:**
-
-| File | Purpose |
-|------|---------|
-| `main.py` | The entry point. Loads data, runs the pipeline, prints results. |
-| `ingestion.py` | Reads and cleans the CSV data. |
-| `feature_engineering.py` | Creates the five CT-RD risk components from raw features. |
-| `causal_analysis.py` | Performs Granger Causality tests to check if past values of one variable can predict future values of another. |
-| `forecasting.py` | Implements three forecasting models: ARIMA, Exponential Smoothing, and Gradient Boosting. |
-| `dynamic_weights.py` | Computes dynamic weights based on current conditions. |
-| `alerting.py` | Maps risk scores to alert levels. |
-| `visualization.py` | Creates matplotlib plots and charts. |
-| `utils.py` | Helper functions shared across modules. |
-| `requirements.txt` | Python package dependencies. |
-
-**Granger Causality (from the Python version):** This is a statistical test that checks whether the past values of one time series (e.g., wind speed) help predict the future values of another time series (e.g., fire risk). If wind speed from yesterday and the day before is statistically useful for predicting today's fire risk, we say "wind speed Granger-causes fire risk." The Python pipeline includes this test; the TypeScript web version does not (it uses the dynamic weighting approach instead, which achieves a similar goal more simply).
-
-**ARIMA (from the Python version):** Auto-Regressive Integrated Moving Average. A classical time series forecasting model that predicts future values based on:
-- **AR (Auto-Regressive):** Past values of the series itself. "Tomorrow's risk depends on today's risk and yesterday's risk."
-- **I (Integrated):** Differencing to make the series stationary (removing trends). "Instead of predicting the risk level, predict the change in risk level."
-- **MA (Moving Average):** Past forecast errors. "Adjust the prediction based on how wrong recent predictions have been."
-
-**Exponential Smoothing (from the Python version):** A forecasting method that gives more weight to recent observations and less to older ones. The "smoothing" factor controls how quickly old data loses influence.
-
-**Analogy:** Think about estimating next week's temperature. ARIMA is like a detailed mathematical model that considers trends, seasonality, and error corrections. Exponential Smoothing is simpler: "take the most recent temperature and blend it with the historical average, favoring the recent data." Both work, but ARIMA is more complex and powerful.
+13. **Compare Regions:** Lets you pick two previously analyzed regions and compare them side by side: risk scores, alert levels, dominant drivers, and component breakdowns.
 
 ---
 
@@ -803,17 +974,20 @@ Every technology used in this project, explained:
 | **Next.js** | A React-based web framework that supports both client-side rendering and server-side API routes. Built by Vercel. | Lets us build the entire app (frontend + backend) in one codebase. |
 | **TypeScript** | JavaScript with static type checking. You declare what type each variable is (string, number, etc.) and the compiler catches mistakes before runtime. | Prevents bugs. If a function expects a number and you pass a string, TypeScript tells you immediately instead of crashing at runtime. |
 | **React** | A JavaScript library for building user interfaces using components. Each piece of the UI (a button, a panel, the map) is a self-contained component that can be reused. | The standard for modern web UI development. |
+| **Python** | A programming language widely used in data science and machine learning. | Runs the ML models (ARIMA, Gradient Boosting, Exponential Smoothing, Granger Causality). |
+| **scikit-learn** | The most popular Python machine learning library. Provides implementations of hundreds of ML algorithms. | We use `GradientBoostingRegressor` for forecasting and `MinMaxScaler` for normalization. |
+| **statsmodels** | A Python library for statistical modeling and hypothesis testing. | We use it for ARIMA forecasting, Exponential Smoothing, and Granger Causality tests. |
+| **pandas** | A Python library for data manipulation and analysis. Provides the `DataFrame` data structure (think of it as a spreadsheet in code). | Loads, cleans, and processes the CSV dataset in the Python pipeline. |
+| **NumPy** | A Python library for numerical computing. Provides fast array operations. | Used for mathematical calculations throughout the Python pipeline. |
 | **D3.js** | A JavaScript library for data-driven visualization. It gives you low-level control over SVG elements, allowing you to draw custom charts, maps, and graphs. | We use it to draw the world map with complete control over styling and interactivity. |
 | **TopoJSON** | A compact way to encode geographic shapes (country borders, coastlines) as JSON data. An extension of GeoJSON that reduces file size by sharing boundaries between neighboring regions. | Keeps our map data file small (~120KB for the whole world instead of megabytes). |
-| **Tailwind CSS** | A utility-first CSS framework where you style elements using small, single-purpose classes directly in your HTML. | Used for some utility classes, though our main styling is through CSS custom properties. |
 | **CSS Custom Properties** | Also called CSS variables. Defined once (e.g., `--bg: #0a0a0a`) and used everywhere. Changing the variable changes every element that uses it. | Powers our theme system. One variable change switches the entire app from dark to light. |
 | **PapaParse** | A JavaScript library for parsing CSV files in the browser or Node.js. Handles edge cases like quoted fields, different delimiters, and malformed rows. | Parses the uploaded CSV data into a JavaScript array of objects. |
 | **Nodemailer** | A Node.js library for sending emails through SMTP. | Powers the email notification system for high-severity alerts. |
 | **Telegram Bot API** | An HTTP API provided by Telegram that lets bots send messages to chats and groups. | Powers the Telegram notification system. |
 | **sonner** | A lightweight React toast notification library. | Shows those small pop-up notifications ("Analysis complete," "Error: CSV required") in the corner of the screen. |
 | **SVG** | Scalable Vector Graphics. An XML-based format for drawing 2D graphics in the browser. Unlike images (PNG, JPG), SVGs scale to any size without losing quality. | Used for the map, the sparkline chart, and other visual elements. |
-| **App Router** | Next.js's routing system where the file structure in the `app/` directory defines the pages and API endpoints. `app/page.tsx` is the homepage. `app/api/analyze/route.ts` is the `/api/analyze` endpoint. | Keeps the project organized: file structure mirrors URL structure. |
-| **`dynamic()` import** | A Next.js function that lazily loads a component only on the client side, not during server-side rendering. | The D3 map uses browser APIs (`window`, `document`) that do not exist on the server. Dynamic import ensures it only loads in the browser. |
+| **child_process** | A built-in Node.js module that lets you spawn external programs (like Python) from JavaScript. | The bridge that lets the Next.js server call the Python ML pipeline. |
 | **SMTP** | Simple Mail Transfer Protocol. The standard protocol for sending emails across the internet. | Nodemailer uses SMTP to connect to mail servers. |
 
 ---
@@ -883,16 +1057,28 @@ We realized: this is how monitoring tools should look.
 
 ---
 
-### Iteration 6: Final Version
+### Iteration 6: Rewriting the Frontend
 
 **What we built:** A complete rebuild of the frontend following the Situation Monitor's design language:
 - D3.js 2D equirectangular map with fire hotspots, risk zones, and weather tooltips.
 - Dark terminal theme with CSS custom properties.
 - Responsive masonry grid of compact panels.
-- Every ML feature preserved from the TypeScript pipeline.
+- All ML functionality preserved from the TypeScript pipeline.
 - Added 7 new features: timeline chart, settings presets, click-on-map coordinates, region comparison, report export, theme toggle, and SSE auto-refresh.
 
-**The key takeaway:** Building a good ML system requires iteration across the entire stack. The model, the API, the UI, and the design language all need to work together. We went through five unsatisfactory versions before arriving at the final one. Each failure taught us something.
+---
+
+### Iteration 7: Connecting the Real ML Models
+
+**The problem:** Teammates pointed out that the Python ML files (ARIMA, Gradient Boosting, Granger Causality) were completely disconnected from the web app. The TypeScript pipeline was doing basic arithmetic, not real ML.
+
+**The fix:** We built a Python-to-TypeScript bridge (`ml_bridge.py` + `python-bridge.ts`) that lets the web app call the Python ML pipeline via subprocess. We also made the Python pipeline location-aware by injecting live weather and satellite data into the dataset before running the models.
+
+**Lesson:** The ML models need to be visible and integrated into the product, not hidden in unused files.
+
+---
+
+**The key takeaway:** Building a good ML system requires iteration across the entire stack. The model, the API, the UI, and the design language all need to work together. We went through six unsatisfactory versions before arriving at the final one. Each failure taught us something.
 
 ---
 
@@ -901,6 +1087,7 @@ We realized: this is how monitoring tools should look.
 ### Prerequisites
 
 - Node.js 18 or later
+- Python 3.10 or later
 - npm (comes with Node.js)
 - A modern web browser (Chrome, Firefox, Safari, Edge)
 
@@ -912,13 +1099,21 @@ We realized: this is how monitoring tools should look.
    cd wildfire-ctrd
    ```
 
-2. **Install dependencies:**
+2. **Install Python dependencies:**
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+   On macOS, if xgboost fails, run `brew install libomp` first.
+
+3. **Install web dependencies:**
    ```bash
    cd web
    npm install
    ```
 
-3. **(Optional) Configure live API keys** by creating a `.env.local` file in the `web/` directory:
+4. **(Optional) Configure live API keys** by creating a `.env.local` file in the `web/` directory:
    ```
    FIRMS_MAP_KEY=your_nasa_firms_key
    GEE_PROXY_URL=your_gee_proxy_url
@@ -929,24 +1124,25 @@ We realized: this is how monitoring tools should look.
    ```
    If you skip this step, the system works fine using the built-in dataset and heuristic estimates for geospatial data.
 
-4. **Start the application:**
+5. **Start the application:**
    ```bash
    npm run dev
    ```
 
-5. **Open** `http://localhost:3000` in your browser.
+6. **Open** `http://localhost:3000` in your browser.
 
-6. **Try it out:**
-   - Click "Use Built-in Dataset" to load the Algerian dataset.
-   - Enter any coordinates (e.g., 36.7, 3.2 for Algeria) or click on the map.
+7. **Try it out:**
+   - Click "Sample" to load the built-in Algerian dataset.
+   - Click on the map to set coordinates (e.g., click California, or type 36.7, 3.2 for Algeria).
    - Click "Run Analysis."
-   - Explore the panels: forecasts, explainability, alerts, timeline, evaluation.
+   - Scroll down to see the ML Model Predictions panel (ARIMA, Exp Smoothing, Gradient Boosting results), the Granger Causality Matrix, Forecasts, Explainability, Alerts, and more.
+   - Try different locations and compare: the ML predictions will change based on live weather at each location.
 
-### Running the Original Python Pipeline
+### Running the Original Python Pipeline Standalone
 
 ```bash
 cd ..  # back to the wildfire-ctrd root
-pip install -r requirements.txt
+source .venv/bin/activate
 python main.py
 ```
 
