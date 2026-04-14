@@ -34,6 +34,30 @@ export type ExplainabilityPayload = {
   changedSinceYesterday: Array<{ component: string; delta: number }>;
 };
 
+export type MLModelPredictions = Record<
+  string,
+  {
+    arima: number | null;
+    exponential_smoothing: number | null;
+    gradient_boosting: number | null;
+  }
+>;
+
+export type GrangerCausalityMatrix = Record<string, Record<string, number | null>>;
+
+export type PythonMLPayload = {
+  available: boolean;
+  model_predictions: MLModelPredictions;
+  ensemble_predictions: Record<string, number>;
+  granger_causality: GrangerCausalityMatrix;
+  dynamic_weights: Record<string, number>;
+  composite_score: number;
+  alert_level: string;
+  dominant_driver: string;
+  models_used: string[];
+  component_series: Record<string, number[]>;
+};
+
 export type AnalyzeResponse = {
   requestId: string;
   latencyMs: number;
@@ -54,6 +78,7 @@ export type AnalyzeResponse = {
     triggered: boolean;
     recipients: string[];
   };
+  pythonML?: PythonMLPayload;
 };
 
 export type Region = {

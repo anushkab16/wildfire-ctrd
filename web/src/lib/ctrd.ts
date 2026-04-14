@@ -93,18 +93,37 @@ function buildComponents(rows: Row[]) {
 }
 
 function deriveDynamicWeights(latest: ComponentRow, weather: Record<string, number>, geospatial: Record<string, number>) {
+  const base = 0.10;
   const weights: Record<ComponentKey, number> = {
-    ignition: 0.2,
-    spread: 0.2,
-    fuel: 0.2,
-    containment: 0.2,
-    impact: 0.2,
+    ignition: base,
+    spread: base,
+    fuel: base,
+    containment: base,
+    impact: base,
   };
-  if (Number(latest.dc) > 0.6 || weather.wind > 20) weights.fuel += 0.08;
-  if (Number(latest.ws) > 0.6 || weather.wind > 25) weights.spread += 0.1;
-  if (Number(latest.temperature) > 0.6 || weather.temperature > 32) weights.ignition += 0.08;
-  if ((geospatial.burnSeverityIndex ?? 0) > 0.6) weights.impact += 0.1;
-  if ((geospatial.vegetationDryness ?? 0) > 0.65) weights.fuel += 0.05;
+
+  for (const key of COMPONENT_KEYS) {
+    weights[key] += Number(latest[key]) || 0;
+  }
+
+  const temp = Number(latest.temperature) || 0;
+  const wind = Number(latest.ws) || 0;
+  const dc = Number(latest.dc) || 0;
+  const humidity = Number(latest.rh) || 0.5;
+
+  if (temp > 0.4) weights.ignition += (temp - 0.4) * 0.3;
+  if (humidity < 0.5) weights.ignition += (0.5 - humidity) * 0.2;
+  if (wind > 0.3) weights.spread += (wind - 0.3) * 0.3;
+  if (dc > 0.3) {
+    weights.fuel += (dc - 0.3) * 0.2;
+    weights.containment += (dc - 0.3) * 0.15;
+  }
+
+  if (weather.wind > 20) weights.spread += 0.08;
+  if (weather.temperature > 32) weights.ignition += 0.08;
+  if (weather.humidity < 30) weights.ignition += 0.05;
+  if ((geospatial.burnSeverityIndex ?? 0) > 0.5) weights.impact += 0.1;
+  if ((geospatial.vegetationDryness ?? 0) > 0.5) weights.fuel += 0.06;
 
   const sum = Object.values(weights).reduce((a, b) => a + b, 0);
   const normalized = { ...weights };

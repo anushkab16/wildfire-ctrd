@@ -55,6 +55,8 @@ type AlertRow = {
 
 type PanelId =
   | "risk"
+  | "mlmodels"
+  | "granger"
   | "fires"
   | "feed"
   | "forecasts"
@@ -72,9 +74,9 @@ const PRESETS: Preset[] = [
   {
     id: "researcher",
     name: "Researcher",
-    desc: "All panels visible \u2014 full ML detail",
+    desc: "All panels visible, full ML detail",
     panels: [
-      "risk", "fires", "feed", "forecasts", "explain",
+      "risk", "mlmodels", "granger", "fires", "feed", "forecasts", "explain",
       "alerts", "watchlists", "notifications", "evaluation", "timeline", "compare",
     ],
   },
@@ -93,7 +95,7 @@ const PRESETS: Preset[] = [
 ];
 
 const ALL_PANELS: PanelId[] = [
-  "risk", "fires", "feed", "forecasts", "explain",
+  "risk", "mlmodels", "granger", "fires", "feed", "forecasts", "explain",
   "alerts", "watchlists", "notifications", "evaluation", "timeline", "compare",
 ];
 
@@ -734,6 +736,138 @@ export default function Home() {
                   </div>
                 )}
               </div>
+            </Panel>
+          )}
+
+          {/* --- ML Models (Python Pipeline) --- */}
+          {panelVisible("mlmodels") && (
+            <Panel
+              title="ML Model Predictions"
+              status={result?.pythonML?.available ? "Connected" : "Offline"}
+              statusClass={result?.pythonML?.available ? "monitoring" : "critical"}
+            >
+              {result?.pythonML?.available ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                  <div style={{ fontSize: "0.55rem", color: "var(--text-muted)", marginBottom: "0.2rem" }}>
+                    Models: {result.pythonML.models_used.map((m) => m.split(" - ")[0]).join(", ")}
+                  </div>
+                  <div style={{ fontSize: "0.6rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase" }}>Per-Component Forecasts</div>
+                  {Object.entries(result.pythonML.model_predictions).map(([comp, preds]) => (
+                    <div key={comp} style={{ background: "var(--bg)", borderRadius: 4, padding: "0.35rem 0.5rem" }}>
+                      <div style={{ fontSize: "0.65rem", fontWeight: 600, textTransform: "capitalize", marginBottom: "0.2rem", color: "var(--text-primary)" }}>{comp}</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.3rem" }}>
+                        {(["arima", "exponential_smoothing", "gradient_boosting"] as const).map((model) => {
+                          const val = preds[model];
+                          const label = model === "exponential_smoothing" ? "Exp Smooth" : model === "gradient_boosting" ? "Grad Boost" : "ARIMA";
+                          return (
+                            <div key={model} style={{ textAlign: "center" }}>
+                              <div style={{ fontSize: "0.5rem", textTransform: "uppercase", color: "var(--text-muted)", letterSpacing: "0.03em" }}>{label}</div>
+                              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: val != null ? (val > 0.6 ? "var(--red)" : val > 0.4 ? "var(--yellow)" : "var(--green)") : "var(--text-muted)" }}>
+                                {val != null ? val.toFixed(3) : "N/A"}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{ marginTop: "0.3rem" }}>
+                    <div style={{ fontSize: "0.6rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "0.2rem" }}>Ensemble (Avg of Models)</div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Composite Score</span>
+                      <span style={{ fontWeight: 700, color: result.pythonML.composite_score > 0.6 ? "var(--red)" : result.pythonML.composite_score > 0.4 ? "var(--yellow)" : "var(--green)" }}>
+                        {result.pythonML.composite_score.toFixed(4)}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Alert Level</span>
+                      <span style={{ fontWeight: 600, color: alertLevelColors[result.pythonML.alert_level] ?? "var(--text)" }}>{result.pythonML.alert_level}</span>
+                    </div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem" }}>
+                      <span style={{ color: "var(--text-muted)" }}>Dominant Driver</span>
+                      <span style={{ textTransform: "capitalize" }}>{result.pythonML.dominant_driver}</span>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: "0.3rem" }}>
+                    <div style={{ fontSize: "0.6rem", fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", marginBottom: "0.2rem" }}>Dynamic Weights</div>
+                    {Object.entries(result.pythonML.dynamic_weights).map(([k, v]) => (
+                      <div key={k} style={{ display: "flex", justifyContent: "space-between", fontSize: "0.65rem", padding: "0.1rem 0" }}>
+                        <span style={{ textTransform: "capitalize" }}>{k}</span>
+                        <span style={{ color: "var(--text-dim)" }}>{(v * 100).toFixed(1)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", textAlign: "center", padding: "1rem" }}>
+                  {result ? "Python ML pipeline not available. Install Python dependencies (pip install -r requirements.txt) to enable ARIMA, Gradient Boosting, and Exponential Smoothing models." : "Run analysis to see ML model predictions"}
+                </div>
+              )}
+            </Panel>
+          )}
+
+          {/* --- Granger Causality --- */}
+          {panelVisible("granger") && (
+            <Panel title="Granger Causality Matrix" status={result?.pythonML?.available ? "Computed" : ""} statusClass="monitoring">
+              {result?.pythonML?.available && Object.keys(result.pythonML.granger_causality).length > 0 ? (() => {
+                const components = Object.keys(result.pythonML!.granger_causality);
+                const matrix = result.pythonML!.granger_causality;
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+                    <div style={{ fontSize: "0.55rem", color: "var(--text-muted)", marginBottom: "0.2rem" }}>
+                      P-values from Granger Causality test (statsmodels). Green cells (p &lt; 0.05) indicate statistically significant causal influence.
+                    </div>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ borderCollapse: "collapse", width: "100%", fontSize: "0.6rem" }}>
+                        <thead>
+                          <tr>
+                            <th style={{ padding: "0.25rem", textAlign: "left", color: "var(--text-muted)", borderBottom: "1px solid var(--border)" }}></th>
+                            {components.map((c) => (
+                              <th key={c} style={{ padding: "0.25rem", textAlign: "center", color: "var(--text-muted)", borderBottom: "1px solid var(--border)", textTransform: "capitalize", fontSize: "0.5rem" }}>
+                                {c.slice(0, 4)}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {components.map((row) => (
+                            <tr key={row}>
+                              <td style={{ padding: "0.25rem", fontWeight: 600, textTransform: "capitalize", color: "var(--text-secondary)", borderBottom: "1px solid var(--border)", fontSize: "0.55rem" }}>{row.slice(0, 5)}</td>
+                              {components.map((col) => {
+                                const val = matrix[row]?.[col];
+                                const isSelf = row === col;
+                                const isSignificant = val != null && val < 0.05 && !isSelf;
+                                return (
+                                  <td
+                                    key={col}
+                                    style={{
+                                      padding: "0.25rem",
+                                      textAlign: "center",
+                                      borderBottom: "1px solid var(--border)",
+                                      color: isSelf ? "var(--text-muted)" : isSignificant ? "var(--green)" : "var(--red)",
+                                      fontWeight: isSignificant ? 700 : 400,
+                                      background: isSignificant ? "rgba(68, 255, 136, 0.08)" : "transparent",
+                                    }}
+                                  >
+                                    {isSelf ? "-" : val != null ? val.toFixed(3) : "N/A"}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div style={{ fontSize: "0.5rem", color: "var(--text-muted)", marginTop: "0.2rem" }}>
+                      Rows cause columns. p &lt; 0.05 = significant. Test: SSR F-test, maxlag=4.
+                    </div>
+                  </div>
+                );
+              })() : (
+                <div style={{ color: "var(--text-muted)", fontSize: "0.7rem", textAlign: "center", padding: "1rem" }}>
+                  {result ? "Granger Causality requires the Python ML pipeline. Install Python dependencies to enable." : "Run analysis to compute Granger Causality"}
+                </div>
+              )}
             </Panel>
           )}
 

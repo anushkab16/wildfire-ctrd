@@ -7,8 +7,10 @@ import { sendEmailAlert, sendTelegramAlert } from "@/lib/alerts/notifiers";
 import { fetchFirmsHotspots } from "@/lib/ingestion/firms";
 import { fetchGeospatialSummary } from "@/lib/ingestion/gee";
 import { fetchWeatherSummary } from "@/lib/ingestion/weather";
+import { runPythonML } from "@/lib/ml/python-bridge";
 import { addAlert } from "@/lib/store/alerts";
 import { addRiskRun } from "@/lib/store/risk-runs";
+import type { PythonMLPayload } from "@/lib/types";
 
 function toBBox(latitude: number, longitude: number, radiusKm: number) {
   const delta = Math.max(0.05, radiusKm / 111);
@@ -111,6 +113,41 @@ export async function POST(request: Request) {
       longitude: h.longitude,
       frp: h.frp,
     }));
+
+    let pythonML: PythonMLPayload = {
+      available: false,
+      model_predictions: {},
+      ensemble_predictions: {},
+      granger_causality: {},
+      dynamic_weights: {},
+      composite_score: 0,
+      alert_level: "GREEN",
+      dominant_driver: "",
+      models_used: [],
+      component_series: {},
+    };
+
+    try {
+      const pyResult = await runPythonML(csvText);
+      if (pyResult.success) {
+        pythonML = {
+          available: true,
+          model_predictions: pyResult.model_predictions,
+          ensemble_predictions: pyResult.ensemble_predictions,
+          granger_causality: pyResult.granger_causality,
+          dynamic_weights: pyResult.dynamic_weights,
+          composite_score: pyResult.composite_score,
+          alert_level: pyResult.alert_level,
+          dominant_driver: pyResult.dominant_driver,
+          models_used: pyResult.models_used,
+          component_series: pyResult.component_series,
+        };
+      }
+    } catch {
+      /* Python ML is optional; TS pipeline always produces results */
+    }
+
+    result.pythonML = pythonML;
 
     const runRecord = await addRiskRun({
       requestId,

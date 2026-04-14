@@ -2,6 +2,51 @@
   "watchlists": [],
   "riskRuns": [
     {
+      "requestId": "53032cce-2237-4ca7-af33-cb1518e7778f",
+      "region": {
+        "latitude": 38.51,
+        "longitude": -119.47,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.21703238248866707,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 7,
+      "id": "892553f9-ae5f-4ec1-a620-7a50da505223",
+      "createdAt": "2026-04-14T05:18:53.622Z"
+    },
+    {
+      "requestId": "40ddc687-d416-42ee-9631-7b925481cf84",
+      "region": {
+        "latitude": 20.74,
+        "longitude": 14.53,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 9,
+      "id": "9fdb2173-8fef-4ce9-aa59-3e288459b8f9",
+      "createdAt": "2026-04-14T05:17:35.871Z"
+    },
+    {
+      "requestId": "7de6e685-ddab-4c38-bbe2-08b1c73f4ca3",
+      "region": {
+        "latitude": 22.28,
+        "longitude": 14.53,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.2137976409024501,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 8,
+      "id": "d747dc7a-2227-47cc-8c9a-0876bcde28fc",
+      "createdAt": "2026-04-14T05:09:22.396Z"
+    },
+    {
       "requestId": "8b02c202-89cb-4e69-9b66-e422514b41ab",
       "region": {
         "latitude": -28.57,
@@ -123,6 +168,39 @@
     }
   ],
   "alerts": [
+    {
+      "runId": "892553f9-ae5f-4ec1-a620-7a50da505223",
+      "requestId": "53032cce-2237-4ca7-af33-cb1518e7778f",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "fb2351e5-6504-4e6e-8d4d-cb6b6773eefd",
+      "createdAt": "2026-04-14T05:18:53.624Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "9fdb2173-8fef-4ce9-aa59-3e288459b8f9",
+      "requestId": "40ddc687-d416-42ee-9631-7b925481cf84",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "0a1473c1-b70c-4b89-aa26-0076cb25c2ca",
+      "createdAt": "2026-04-14T05:17:35.874Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "d747dc7a-2227-47cc-8c9a-0876bcde28fc",
+      "requestId": "7de6e685-ddab-4c38-bbe2-08b1c73f4ca3",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "c4904238-2c70-4f0d-bee9-d71b00e5c231",
+      "createdAt": "2026-04-14T05:09:22.399Z",
+      "acknowledgedAt": null
+    },
     {
       "runId": "f24c5bad-d02b-4aa8-ac23-a34e2e48ddbf",
       "requestId": "8b02c202-89cb-4e69-9b66-e422514b41ab",
