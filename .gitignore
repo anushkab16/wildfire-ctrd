@@ -10,5 +10,4 @@ wildfire_env/
 # Mac
 .DS_Store
 
-# Data (optional)
-*.csv
+researchpaper.tex
