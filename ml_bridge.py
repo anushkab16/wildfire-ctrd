@@ -2,7 +2,7 @@
 Bridge script that runs the full Python ML pipeline and outputs JSON to stdout.
 Called by the Next.js web app via child_process.
 
-Usage: python3 ml_bridge.py <path_to_csv>
+Usage: python3 ml_bridge.py <csv_path> [context_json_path]
 """
 
 import io
@@ -52,10 +52,9 @@ def safe_forecast_gb(series):
         model = GradientBoostingRegressor(n_estimators=100, max_depth=3, random_state=42)
         model.fit(X, y)
         pred = float(model.predict([[len(series)]])[0])
-        importances = {f"feature_{i}": float(v) for i, v in enumerate(model.feature_importances_)}
-        return pred, importances
+        return pred
     except Exception:
-        return None, {}
+        return None
 
 
 def run_granger(df, variables, maxlag=4):
@@ -81,11 +80,73 @@ def run_granger(df, variables, maxlag=4):
     return matrix
 
 
-def run_pipeline(csv_path):
+def inject_live_row(df, ctx):
+    """Append a synthetic row that blends the last historical row with live conditions."""
+    last = df.iloc[-1].copy()
+
+    live_temp = ctx.get("temperature", None)
+    live_hum = ctx.get("humidity", None)
+    live_wind = ctx.get("wind", None)
+
+    if live_temp is not None:
+        temp_min, temp_max = 22, 42
+        norm_temp = np.clip((live_temp - temp_min) / (temp_max - temp_min), 0, 1)
+        last["temperature"] = 0.5 * float(last["temperature"]) + 0.5 * norm_temp
+
+    if live_hum is not None:
+        hum_min, hum_max = 21, 90
+        norm_hum = np.clip((live_hum - hum_min) / (hum_max - hum_min), 0, 1)
+        last["humidity"] = 0.5 * float(last["humidity"]) + 0.5 * norm_hum
+
+    if live_wind is not None:
+        wind_min, wind_max = 6, 29
+        norm_wind = np.clip((live_wind - wind_min) / (wind_max - wind_min), 0, 1)
+        last["wind"] = 0.5 * float(last["wind"]) + 0.5 * norm_wind
+
+    hotspot_count = ctx.get("hotspotCount", 0)
+    veg_dry = ctx.get("vegetationDryness", 0)
+    thermal = ctx.get("thermalAnomaly", 0)
+    burn_sev = ctx.get("burnSeverityIndex", 0)
+
+    if hotspot_count > 0:
+        fire_boost = np.clip(hotspot_count / 50, 0, 0.3)
+        last["fwi"] = np.clip(float(last["fwi"]) + fire_boost, 0, 1)
+        last["isi"] = np.clip(float(last["isi"]) + fire_boost * 0.5, 0, 1)
+
+    if veg_dry > 0.4:
+        dry_boost = (veg_dry - 0.4) * 0.3
+        last["dmc"] = np.clip(float(last["dmc"]) + dry_boost, 0, 1)
+        last["dc"] = np.clip(float(last["dc"]) + dry_boost * 0.8, 0, 1)
+
+    if thermal > 0.5:
+        last["temperature"] = np.clip(float(last["temperature"]) + (thermal - 0.5) * 0.3, 0, 1)
+
+    if burn_sev > 0.4:
+        last["fwi"] = np.clip(float(last["fwi"]) + (burn_sev - 0.4) * 0.2, 0, 1)
+
+    last["ignition"] = (
+        0.4 * float(last["ffmc"])
+        + 0.35 * float(last["temperature"])
+        + 0.25 * (1 - float(last["humidity"]))
+    )
+    last["spread"] = 0.6 * float(last["isi"]) + 0.4 * float(last["wind"])
+    last["fuel"] = (float(last["dmc"]) + float(last["dc"]) + float(last["bui"])) / 3
+    last["containment"] = float(last["dc"])
+    last["impact"] = float(last["fwi"])
+
+    new_row = pd.DataFrame([last])
+    return pd.concat([df, new_row], ignore_index=True)
+
+
+def run_pipeline(csv_path, ctx=None):
     df = load_data(csv_path)
     components = ["ignition", "spread", "fuel", "containment", "impact"]
 
     df = create_components(df)
+
+    if ctx:
+        df = inject_live_row(df, ctx)
+
     df = add_lag_features(df, components)
 
     granger_matrix = run_granger(df, components)
@@ -103,8 +164,7 @@ def run_pipeline(csv_path):
 
         arima_pred = safe_forecast_arima(series)
         exp_pred = safe_forecast_exp(series)
-        gb_result = safe_forecast_gb(series)
-        gb_pred = gb_result[0] if gb_result else None
+        gb_pred = safe_forecast_gb(series)
 
         model_predictions[comp] = {
             "arima": arima_pred,
@@ -136,6 +196,10 @@ def run_pipeline(csv_path):
         series = df[comp].dropna().tolist()
         component_series[comp] = [float(v) for v in series[-30:]]
 
+    location_str = ""
+    if ctx:
+        location_str = f"{ctx.get('latitude', '?')}, {ctx.get('longitude', '?')}"
+
     return {
         "success": True,
         "model_predictions": model_predictions,
@@ -154,6 +218,8 @@ def run_pipeline(csv_path):
             "Granger Causality Test - statsmodels",
         ],
         "num_rows": len(df),
+        "location": location_str,
+        "live_context_applied": ctx is not None,
     }
 
 
@@ -163,9 +229,17 @@ if __name__ == "__main__":
         sys.exit(1)
 
     csv_path = sys.argv[1]
+    ctx = None
+    if len(sys.argv) >= 3:
+        try:
+            with open(sys.argv[2], "r") as f:
+                ctx = json.load(f)
+        except Exception:
+            ctx = None
+
     try:
         sys.stdout = io.StringIO()
-        result = run_pipeline(csv_path)
+        result = run_pipeline(csv_path, ctx)
         sys.stdout = _real_stdout
         print(json.dumps(result))
     except Exception as e:

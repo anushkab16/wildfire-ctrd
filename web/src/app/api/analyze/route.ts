@@ -128,7 +128,19 @@ export async function POST(request: Request) {
     };
 
     try {
-      const pyResult = await runPythonML(csvText);
+      const pyResult = await runPythonML(csvText, {
+        temperature: weatherSummary.temperature,
+        humidity: weatherSummary.humidity,
+        wind: weatherSummary.wind,
+        precipitationProbability: weatherSummary.precipitationProbability,
+        hotspotCount: hotspotSummary.count,
+        avgFrp: hotspotSummary.avgFrp,
+        vegetationDryness: geospatialSummary.vegetationDryness,
+        thermalAnomaly: geospatialSummary.thermalAnomaly,
+        burnSeverityIndex: geospatialSummary.burnSeverityIndex,
+        latitude: Number(region.latitude),
+        longitude: Number(region.longitude),
+      });
       if (pyResult.success) {
         pythonML = {
           available: true,

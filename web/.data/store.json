@@ -2,6 +2,81 @@
   "watchlists": [],
   "riskRuns": [
     {
+      "requestId": "7f7b70ee-976b-4e95-9a26-d93f6472125e",
+      "region": {
+        "latitude": -33.59,
+        "longitude": 22.69,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.34921013107133836,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 9,
+      "id": "67e16233-2f36-4203-88c6-0d33eda3af20",
+      "createdAt": "2026-04-14T05:44:18.626Z"
+    },
+    {
+      "requestId": "7182a3a5-af3e-4f9b-91d7-253d42837c80",
+      "region": {
+        "latitude": -30.14,
+        "longitude": 117.73,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.3558829114287364,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 8,
+      "id": "61669172-5de5-4aef-8ead-a36706ca008a",
+      "createdAt": "2026-04-14T05:43:59.351Z"
+    },
+    {
+      "requestId": "3948f9d2-8b0f-4efc-a6bc-2324c7d5ce8c",
+      "region": {
+        "latitude": 28.34,
+        "longitude": 118.49,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.33146803984021156,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 6,
+      "id": "dad9ae12-562d-4dfc-ba94-81c2b1b501c8",
+      "createdAt": "2026-04-14T05:42:09.240Z"
+    },
+    {
+      "requestId": "79480ba0-5ddb-4809-a216-30288fd49a74",
+      "region": {
+        "latitude": 34.7,
+        "longitude": 139.19,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.3402401468634924,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 8,
+      "id": "be0b186a-c3bb-4cfc-9dec-f2e4404ec3be",
+      "createdAt": "2026-04-14T05:30:54.195Z"
+    },
+    {
+      "requestId": "4c9acbfe-ef87-457d-963c-3da47313f5c5",
+      "region": {
+        "latitude": 15,
+        "longitude": 74.81,
+        "radiusKm": 30
+      },
+      "latestRisk": 0.3402401468634924,
+      "latestLevel": "YELLOW",
+      "dominantDriver": "ignition",
+      "hotspotsCount": 0,
+      "latencyMs": 5,
+      "id": "8f1fa539-948d-4c59-b420-3212dc92aad1",
+      "createdAt": "2026-04-14T05:29:05.404Z"
+    },
+    {
       "requestId": "53032cce-2237-4ca7-af33-cb1518e7778f",
       "region": {
         "latitude": 38.51,
@@ -168,6 +243,61 @@
     }
   ],
   "alerts": [
+    {
+      "runId": "67e16233-2f36-4203-88c6-0d33eda3af20",
+      "requestId": "7f7b70ee-976b-4e95-9a26-d93f6472125e",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "a69f2f5c-9030-490c-a7c8-e4e0bda9e72f",
+      "createdAt": "2026-04-14T05:44:18.629Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "61669172-5de5-4aef-8ead-a36706ca008a",
+      "requestId": "7182a3a5-af3e-4f9b-91d7-253d42837c80",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "79dcef61-ed81-4376-a60a-0cabf5102e31",
+      "createdAt": "2026-04-14T05:43:59.354Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "dad9ae12-562d-4dfc-ba94-81c2b1b501c8",
+      "requestId": "3948f9d2-8b0f-4efc-a6bc-2324c7d5ce8c",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "fd7f812c-8a78-4428-ae9d-177bf5eb207d",
+      "createdAt": "2026-04-14T05:42:09.243Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "be0b186a-c3bb-4cfc-9dec-f2e4404ec3be",
+      "requestId": "79480ba0-5ddb-4809-a216-30288fd49a74",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "d90c1588-a943-4d57-b891-e4e3aa3a88a9",
+      "createdAt": "2026-04-14T05:30:54.198Z",
+      "acknowledgedAt": null
+    },
+    {
+      "runId": "8f1fa539-948d-4c59-b420-3212dc92aad1",
+      "requestId": "4c9acbfe-ef87-457d-963c-3da47313f5c5",
+      "level": "YELLOW",
+      "triggered": false,
+      "recipients": [],
+      "status": "triggered",
+      "id": "010e5d3f-4525-4b2e-b864-b2e44b31a740",
+      "createdAt": "2026-04-14T05:29:05.407Z",
+      "acknowledgedAt": null
+    },
     {
       "runId": "892553f9-ae5f-4ec1-a620-7a50da505223",
       "requestId": "53032cce-2237-4ca7-af33-cb1518e7778f",

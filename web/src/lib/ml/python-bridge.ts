@@ -56,12 +56,28 @@ async function findPython(projectRoot: string): Promise<string> {
   }
 }
 
-export async function runPythonML(csvText: string): Promise<PythonMLResult> {
+export type LiveContext = {
+  temperature: number;
+  humidity: number;
+  wind: number;
+  precipitationProbability: number;
+  hotspotCount: number;
+  avgFrp: number;
+  vegetationDryness: number;
+  thermalAnomaly: number;
+  burnSeverityIndex: number;
+  latitude: number;
+  longitude: number;
+};
+
+export async function runPythonML(csvText: string, liveContext: LiveContext): Promise<PythonMLResult> {
   const tmpDir = await mkdtemp(path.join(os.tmpdir(), "wildfire-"));
   const csvPath = path.join(tmpDir, "data.csv");
+  const ctxPath = path.join(tmpDir, "context.json");
 
   try {
     await writeFile(csvPath, csvText, "utf8");
+    await writeFile(ctxPath, JSON.stringify(liveContext), "utf8");
 
     const projectRoot = path.resolve(process.cwd(), "..");
     const bridgeScript = path.join(projectRoot, "ml_bridge.py");
@@ -70,7 +86,7 @@ export async function runPythonML(csvText: string): Promise<PythonMLResult> {
     const result = await new Promise<string>((resolve, reject) => {
       execFile(
         pythonBin,
-        [bridgeScript, csvPath],
+        [bridgeScript, csvPath, ctxPath],
         {
           cwd: projectRoot,
           timeout: 60_000,
@@ -95,6 +111,7 @@ export async function runPythonML(csvText: string): Promise<PythonMLResult> {
   } finally {
     try {
       await unlink(csvPath);
+      await unlink(ctxPath);
     } catch {
       /* ignore cleanup errors */
     }
